@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'users',
+    'posts',
+    'admin_panel'
 ]
 
 MIDDLEWARE = [
@@ -76,8 +80,11 @@ WSGI_APPLICATION = 'social_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': "social_project",
+        'USER': 'mahdi',
+        'PASSWORD': 'mahdiml6',
+        'PORT': '5432'
     }
 }
 
