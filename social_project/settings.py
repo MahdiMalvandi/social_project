@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from .local_config import *
 
@@ -21,6 +22,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'rest_framework_swagger',
     'drf_yasg',
+    'taggit',
     # Apps
     'users',
     'posts',
@@ -93,9 +95,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-MEDIA_ROOT = 'media/'
+
+# Media Files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractBaseUser, UserManager, Permission
 from django.utils import timezone
 
 
-
 def user_profile_upload_path(instance, filename):
     return f"profiles/{instance.user.username}/{filename}"
 
@@ -82,9 +81,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             raise Follow.DoesNotExist("The target user does not exist in the user's followings")
         follow.delete()
         return True
-
-
-
 
 
 class Follow(models.Model):
