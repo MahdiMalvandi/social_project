@@ -1,4 +1,5 @@
 from pathlib import Path
+from .local_config import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,7 +22,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'drf_yasg',
     # Apps
-    # 'users',
+    'users',
     'posts',
     'admin_panel',
 
@@ -35,6 +36,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'users.middleware.UpdateLastSeenMiddleware'
 ]
 
 ROOT_URLCONF = 'social_project.urls'
@@ -62,9 +64,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': "social_project",
-        'USER': 'mahdi',
-        'PASSWORD': 'mahdiml6',
-        'PORT': '5432'
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'PORT': DB_PORT
     }
 }
 
@@ -97,3 +99,5 @@ MEDIA_ROOT = 'media/'
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
