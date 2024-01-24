@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'drf_yasg',
     'taggit',
+    'rest_framework_simplejwt',
+
     # Apps
     'users',
     'posts',
@@ -97,7 +99,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-
 # Media Files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = '/media/'
@@ -105,3 +106,21 @@ MEDIA_URL = '/media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'mahdimalvandi6@gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_PASSWORD = 'ymwnxfcequxzltzm'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # آدرس و پورت ردیس
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+CACHEOPS_REDIS = "redis://127.0.0.1:6379/2"

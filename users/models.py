@@ -24,6 +24,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     username = models.CharField(max_length=32, unique=True)
+    is_auth = models.BooleanField(default=False)
     email = models.EmailField(max_length=50, unique=True)
     phone_number = models.CharField(unique=True, validators=[
         validators.RegexValidator(r'^989[0-3,9]\d{8}$', 'Enter a valid mobile number')
