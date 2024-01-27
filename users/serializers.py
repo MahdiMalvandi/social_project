@@ -10,6 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'password')
 
     def validate(self, data):
+
         username = data['username']
         email = data['email']
         password = data['password']
@@ -31,6 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
         regex = f'^(?=.*{length})(?=.*{special_chars})(?=.*{digit})(?=.*{uppercase})(?=.*{lowercase}).+$'
 
         if not (8 <= len(password) and re.match(regex, password)):
-            raise serializers.ValidationError('Password ')
+            raise serializers.ValidationError('Password is Weak')
 
         return data
