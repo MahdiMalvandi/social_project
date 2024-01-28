@@ -7,6 +7,3 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ['username', 'first_name', 'last_name', 'phone_number']
 
 
-@admin.register(OtpToken)
-class Token(admin.ModelAdmin):
-    list_display = ['code', 'user', 'created', 'expired']

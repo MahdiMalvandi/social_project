@@ -5,13 +5,21 @@ from users.models import User
 from taggit.managers import TaggableManager
 
 
+class ActiveManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class Post(models.Model):
     caption = models.TextField(max_length=10000)
     tags = TaggableManager(blank=True)
     author = models.ForeignKey(User, related_name='posts', on_delete=models.SET_NULL, null=True)
-    comments = GenericRelation('Comment', null=True, blank=True)
-    files = GenericRelation('FileMedia')
-    likes = GenericRelation("Like", null=True, blank=True)
+    comments = GenericRelation('Comment', null=True, blank=True, related_query_name='post_comments')
+    files = GenericRelation('FileMedia', related_query_name='post_files')
+    likes = GenericRelation("Like", null=True, blank=True, related_query_name='post_likes')
+    is_active = models.BooleanField(default=True)
+    actives = ActiveManager()
+
 
 
 class Story(models.Model):

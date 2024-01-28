@@ -94,8 +94,3 @@ class Follow(models.Model):
         unique_together = ('follower', 'following')
 
 
-class OtpToken(models.Model):
-    user = models.ForeignKey(User, related_name='otp_tokens', on_delete=models.CASCADE)
-    code = models.CharField(max_length=6)
-    created = models.DateTimeField(auto_now_add=True)
-    expired = models.DateTimeField(null=True, blank=True)

@@ -1,7 +1,8 @@
 import re
 
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from users.models import *
+from .models import *
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -35,3 +36,22 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Password is Weak')
 
         return data
+
+    def create(self, validated_data):
+
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        return super().update(instance, validated_data)
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'date_of_birth', 'bio')
+
