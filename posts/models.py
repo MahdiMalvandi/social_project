@@ -21,7 +21,6 @@ class Post(models.Model):
     actives = ActiveManager()
 
 
-
 class Story(models.Model):
     content = models.TextField(max_length=10000)
     likes = GenericRelation("Like")

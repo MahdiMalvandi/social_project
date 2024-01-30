@@ -31,7 +31,7 @@ urlpatterns = [
     path('', include('admin_panel.urls')),
 
    # Swagger
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
 ]
 
 if settings.DEBUG:
