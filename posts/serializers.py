@@ -51,7 +51,6 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ('id', 'caption', 'files', 'likes', 'author', 'comments_count', 'likes_count')
 
-
     # method fields
     def get_likes(self, obj):
         likes_data = LikeSerializer(obj.likes.all(), many=True).data
@@ -68,6 +67,19 @@ class PostSerializer(serializers.ModelSerializer):
     def get_files(self, obj):
         files_data = FileMediaSerializer(obj.files.all(), many=True, context={'request': self.context['request']}).data
         return files_data
+
+
+class PostCreateUpdateSerializer(serializers.Serializer):
+    caption = serializers.CharField(max_length=1000)
+    author = UserSerializer(read_only=True)
+    files = FileMediaSerializer(many=True)
+
+    def create(self, validated_data):
+        # username = validated_data['author']
+        # caption = validated_data['caption']
+        print(validated_data)
+        print('----------------------------------------------------------------')
+        return validated_data
 
 
 # endregion

@@ -8,7 +8,7 @@ SECRET_KEY = 'django-insecure-&m#mms@#wkb0s*9tu^#p3hhm6!c9&9kdf3w*t75)#dh%2nj)eh
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'taggit',
     'rest_framework_simplejwt',
+    'corsheaders',
 
     # Apps
     'users',
@@ -40,7 +41,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'users.middleware.UpdateLastSeenMiddleware'
+    'users.middleware.UpdateLastSeenMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'social_project.urls'
@@ -125,3 +129,6 @@ CACHES = {
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5500",
+]

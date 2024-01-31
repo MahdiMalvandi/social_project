@@ -10,12 +10,18 @@ class PostsApiViewSet(ModelViewSet):
     queryset = Post.actives.all()
     serializer_class = PostSerializer
 
-    def get_queryset(self):
-        all_of_posts = Post.actives.all()
-        user = self.request.user
-        following_posts = Post.actives.filter(author__in=user.following.all())
-        queryset = following_posts | all_of_posts
-        return queryset
+    # def get_queryset(self):
+    #     all_of_posts = Post.actives.all()
+    #     user = self.request.user
+    #     following_posts = Post.actives.filter(author__in=user.following.all())
+    #     queryset = following_posts | all_of_posts
+    #     return queryset
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PostCreateUpdateSerializer
+        return PostSerializer
+
 
 class StoriesApiViewSet(ModelViewSet):
     queryset = Story.objects.all()
