@@ -22,6 +22,15 @@ class PostsApiViewSet(ModelViewSet):
             return PostCreateUpdateSerializer
         return PostSerializer
 
+    def create(self, request, *args, **kwargs):
+        caption = request.data.get('caption', '')
+        files_data = request.data.getlist('files', [])
+        data = {'caption': caption, 'files': files_data}
+        serializer = self.get_serializer(data=data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'success': True, 'detail': "post created successfully"}, status=status.HTTP_201_CREATED)
+
 
 class StoriesApiViewSet(ModelViewSet):
     queryset = Story.objects.all()

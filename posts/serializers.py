@@ -32,9 +32,14 @@ class CommentSerializer(serializers.ModelSerializer):
 
 # region file media serializer
 class FileMediaSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(max_length=10000)
+
     class Meta:
         model = FileMedia
         fields = ('id', 'file', 'uploaded_at')
+
+    def create(self, validated_data):
+        return self
 
 
 # endregion
@@ -42,19 +47,22 @@ class FileMediaSerializer(serializers.ModelSerializer):
 # region post serializer
 class PostSerializer(serializers.ModelSerializer):
     author = UserDetailSerializer()
-    likes = LikeSerializer(read_only=True, many=True)
+    likes_count = serializers.SerializerMethodField()
     files = FileMediaSerializer(read_only=True, many=True)
     comments_count = serializers.SerializerMethodField(read_only=True)
-    likes_count = serializers.SerializerMethodField(read_only=True)
+    is_liked = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Post
-        fields = ('id', 'caption', 'files', 'likes', 'author', 'comments_count', 'likes_count')
+        fields = ('id', 'caption', 'files', 'is_liked', 'author', 'comments_count', 'likes_count')
 
     # method fields
-    def get_likes(self, obj):
-        likes_data = LikeSerializer(obj.likes.all(), many=True).data
-        return likes_data
+    def get_is_liked(self, obj):
+        try:
+            like = Like.objects.get(user=self.context['request'].user, content_type__model='post', object_id=obj.id)
+            return True
+        except Like.DoesNotExist:
+            return False
 
     def get_comments_count(self, obj):
         comment_count = obj.comments.count()
@@ -72,14 +80,25 @@ class PostSerializer(serializers.ModelSerializer):
 class PostCreateUpdateSerializer(serializers.Serializer):
     caption = serializers.CharField(max_length=1000)
     author = UserSerializer(read_only=True)
-    files = FileMediaSerializer(many=True)
+    files = serializers.ListField(child=serializers.FileField())
 
     def create(self, validated_data):
-        # username = validated_data['author']
-        # caption = validated_data['caption']
-        print(validated_data)
-        print('----------------------------------------------------------------')
-        return validated_data
+        files_data = validated_data['files']
+
+        post = Post.actives.create(caption=validated_data['caption'], author=self.context['request'].user)
+
+        for file in files_data:
+            print(file)
+            file_obj = FileMedia.objects.create(
+                file=file,
+                content_type=ContentType.objects.get_for_model(Post),
+                object_id=post.id
+            )
+            file_obj.save()
+
+        post.save()
+
+        return post
 
 
 # endregion

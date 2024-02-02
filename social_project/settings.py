@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 from .local_config import *
 
@@ -8,7 +9,7 @@ SECRET_KEY = 'django-insecure-&m#mms@#wkb0s*9tu^#p3hhm6!c9&9kdf3w*t75)#dh%2nj)eh
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -129,6 +130,23 @@ CACHES = {
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5500",
+    "http://127.0.0.1:5500",  # یا هر مبدأ دیگر که نیاز دارید
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    'http://127.0.0.1:5500',
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+}
