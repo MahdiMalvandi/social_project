@@ -33,14 +33,28 @@ class PostsApiViewSet(ModelViewSet):
 
 
 class StoriesApiViewSet(ModelViewSet):
-    queryset = Story.objects.all()
+    queryset = Story.actives.all()
     serializer_class = StorySerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StoryCreateUpdateSerializer
+        return StorySerializer
 
     def list(self, request, *args, **kwargs):
         following_users = request.user.following.all()
         following_stories = Story.objects.filter(author__in=following_users)
         serializer = self.get_serializer(following_stories, many=True)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        content = request.data.get('content', '')
+        files_data = request.data.getlist('files', [])
+        data = {'content': content, 'files': files_data}
+        serializer = self.get_serializer(data=data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'success': True, 'detail': "story created successfully"}, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         return Response({'detail': 'Method not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

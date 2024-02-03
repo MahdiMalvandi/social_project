@@ -19,6 +19,7 @@ class Post(models.Model):
     likes = GenericRelation("Like", null=True, blank=True, related_query_name='post_likes')
     is_active = models.BooleanField(default=True)
     actives = ActiveManager()
+    created = models.DateTimeField(auto_now_add=True)
 
 
 class Story(models.Model):
@@ -27,6 +28,9 @@ class Story(models.Model):
     author = models.ForeignKey(User, related_name='stories', on_delete=models.CASCADE)
     comments = GenericRelation("Comment", null=True, blank=True)
     files = GenericRelation("FileMedia")
+    is_active = models.BooleanField(default=True)
+    actives = ActiveManager()
+    created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Story by {self.author.username}"

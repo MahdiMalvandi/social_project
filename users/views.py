@@ -4,14 +4,17 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.permissions import AllowAny
 from .functions import send_code
 from users.models import User
 from .serializers import *
+from posts.models import Post
 
 
 # region login and registration
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         data = request.data
         email = data['email'] if 'email' in data else None
@@ -43,6 +46,8 @@ class RegisterAndSendEmail(APIView):
     """
 
     def post(self, request, *args, **kwargs):
+        permission_classes = [AllowAny]
+
         data = request.data
 
         email = data['email'] if 'email' in data else None
@@ -62,6 +67,8 @@ class RegisterAndSendEmail(APIView):
 
 
 class GetUserToken(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         user_email = request.data.get('email', '')
         verification_code = request.data.get('code', '')
@@ -88,6 +95,8 @@ class GetUserToken(APIView):
 
 
 class ResendCode(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         email = request.data['email']
         cache_key = f'email_verification:{email}'
@@ -101,13 +110,9 @@ class ResendCode(APIView):
             return Response({'error': "User not found"})
 
         if user.is_auth:
-            return Response({"error": "The user has already been verified and must login"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "The user has already been verified and must login"},
+                            status=status.HTTP_403_FORBIDDEN)
 
         return send_code(email)
 
 # endregion
-
-
-
-
-
