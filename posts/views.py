@@ -41,11 +41,11 @@ class StoriesApiViewSet(ModelViewSet):
             return StoryCreateUpdateSerializer
         return StorySerializer
 
-    def list(self, request, *args, **kwargs):
-        following_users = request.user.following.all()
-        following_stories = Story.objects.filter(author__in=following_users)
-        serializer = self.get_serializer(following_stories, many=True)
-        return Response(serializer.data)
+    # def list(self, request, *args, **kwargs):
+    #     following_users = request.user.following.all()
+    #     following_stories = Story.actives.filter(author__in=following_users)
+    #     serializer = self.get_serializer(following_stories, many=True)
+    #     return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         content = request.data.get('content', '')
