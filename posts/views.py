@@ -132,3 +132,69 @@ class LikeApiView(APIView):
             }
 
         return Response(data, status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentsApiView(APIView):
+    def get(self, request, post_or_story, pk):
+        user = request.user
+
+        # Validate 'post_or_story' parameter
+        if post_or_story not in ['post', 'story']:
+            return Response('"post_or_story" should be either a "post" or a "story"',
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Get object based on 'post_or_story' and 'pk'
+        if post_or_story == 'story':
+            try:
+                object = Story.actives.get(pk=pk)
+            except Story.DoesNotExist:
+                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
+        else:
+            try:
+                object = Post.actives.get(pk=pk)
+            except Post.DoesNotExist:
+                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+
+        # Get ContentType for the object
+        content_type = ContentType.objects.get_for_model(object)
+
+        comments = Comment.objects.filter(content_type=content_type, object_id=object.id, replies=None)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def post(self, request, post_or_story, pk):
+        user = request.user
+
+        # Validate 'post_or_story' parameter
+        if post_or_story not in ['post', 'story']:
+            return Response('"post_or_story" should be either a "post" or a "story"',
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Get object based on 'post_or_story' and 'pk'
+        if post_or_story == 'story':
+            try:
+                object = Story.actives.get(pk=pk)
+            except Story.DoesNotExist:
+                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
+        else:
+            try:
+                object = Post.actives.get(pk=pk)
+            except Post.DoesNotExist:
+                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+
+        # Get ContentType for the object
+        content_type = ContentType.objects.get_for_model(object)
+        data = {
+            'author': user,
+            'replies': request.data.get('replies'),
+            'content_type': content_type,
+            'object_id': object.id,
+            'body': request.data['body']
+        }
+        serializer = CommentCreateUpdateSerializer(data=data)
+
+        response = {
+            'message': 'success',
+            'comments': CommentSerializer(object.comments.all(), many=True).data
+        }
+        return Response(response, status=status.HTTP_201_CREATED)

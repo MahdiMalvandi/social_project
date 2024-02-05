@@ -27,8 +27,8 @@ class CommentSerializer(serializers.ModelSerializer):
     - `author`: Serializes the author of the comment using UserDetailSerializer.
     - `replies`: Serializes the replies of the comment using CommentSerializer.
     """
-    author = UserDetailSerializer()
-    replies = serializers.SerializerMethodField()
+    author = UserDetailSerializer(read_only=True)
+    replies = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Comment
@@ -40,6 +40,53 @@ class CommentSerializer(serializers.ModelSerializer):
         """
         comment_replies_data = self.__class__(obj.comment_replies.all(), many=True, context=self.context).data
         return comment_replies_data
+
+class CommentCreateUpdateSerializer(serializers.Serializer):
+    author = UserSerializer(read_only=True)
+    body = serializers.CharField(max_length=100000)
+    replies = serializers.CharField(max_length=10000000)
+    object_id = serializers.CharField(max_length=1000000)
+    content_type = serializers.CharField(max_length=1000)
+
+    def create(self, validated_data):
+        """
+        Create a new comment.
+
+        Parameters:
+        - `validated_data`: A dictionary of validated data.
+
+        Returns:
+        - A Comment object.
+        """
+        user = validated_data['author']
+        content_type = validated_data['content_type']
+        object_id = validated_data['object_id']
+
+        replies_data = validated_data.get('replies')
+        if replies_data:
+            try:
+                replies = Comment.objects.get(pk=replies_data)
+            except Comment.DoesNotExist:
+                return serializers.ValidationError('The id of the comment on which the reply was posted is wrong')
+
+        comment = Comment.objects.create(
+            author=user,
+            content_type=content_type,
+            object_id=object_id,
+            body=validated_data['body'],
+            replies=replies_data if replies_data is not None else None
+        )
+
+        return comment
+
+    def validators(self, attrs):
+        print('validating')
+        print(attrs)
+        return attrs
+
+    def is_valid(self, *, raise_exception=False):
+        super().is_valid(raise_exception=True)
+        return None
 
 # endregion
 
@@ -216,5 +263,6 @@ class StoryCreateUpdateSerializer(serializers.Serializer):
 
         story.save()
         return story
+
 
 # endregion
