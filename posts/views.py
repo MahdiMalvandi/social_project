@@ -1,9 +1,11 @@
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from .serializers import *
+from django.contrib.contenttypes.models import ContentType
 
 
 class PostsApiViewSet(ModelViewSet):
@@ -54,6 +56,7 @@ class StoriesApiViewSet(ModelViewSet):
         serializer = self.get_serializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response({'success': True, 'detail': "story created successfully"}, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -65,3 +68,67 @@ class PostCommentView(APIView):
         post_comments = Post.actives.get(pk=pk).comments.all()
         serializer = CommentSerializer(post_comments, many=True)
         return Response(serializer.data)
+
+
+class LikeApiView(APIView):
+    """
+    API view for handling likes and dislikes on posts and stories.
+    """
+
+    def post(self, request, post_or_story, pk):
+        """
+        Handle POST requests for liking/disliking posts or stories.
+
+        Parameters:
+        - `post_or_story`: Specify whether the object is a 'post' or a 'story'.
+        - `pk`: Primary key of the post or story.
+
+        Returns:
+        - Response with relevant data and status code.
+        """
+
+        user = request.user
+
+        # Validate 'post_or_story' parameter
+        if post_or_story not in ['post', 'story']:
+            return Response('"post_or_story" should be either a "post" or a "story"',
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Get object based on 'post_or_story' and 'pk'
+        if post_or_story == 'story':
+            try:
+                object = Story.actives.get(pk=pk)
+            except Story.DoesNotExist:
+                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
+        else:
+            try:
+                object = Post.actives.get(pk=pk)
+            except Post.DoesNotExist:
+                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+
+        # Get ContentType for the object
+        content_type = ContentType.objects.get_for_model(object)
+
+        # Check if the user has already liked the object
+        like = Like.objects.filter(user=user, content_type=content_type, object_id=object.pk)
+
+        if like.exists():  # If user has liked, remove the like
+            like.first().delete()
+            data = {
+                'likes_count': object.likes.count(),
+                'detail': 'success',
+                'is_liked': False
+            }
+        else:  # If user has not liked, add a like
+            like_obj = Like.objects.create(
+                user=user,
+                content_type=content_type,
+                object_id=object.pk
+            )
+            data = {
+                'likes_count': object.likes.count(),
+                'detail': 'success',
+                'is_liked': True
+            }
+
+        return Response(data, status=status.HTTP_204_NO_CONTENT)

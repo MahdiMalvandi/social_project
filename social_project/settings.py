@@ -26,6 +26,9 @@ INSTALLED_APPS = [
     'taggit',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_celery_beat',
+    'celery',
+
 
     # Apps
     'users',
@@ -35,6 +38,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -153,10 +157,18 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
 }
-
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+CELERY_BEAT_SCHEDULE = {
+    'deactivate-stories': {
+        'task': 'posts.tasks.deactivate_stories',
+        'schedule': 10,
+    },
+}

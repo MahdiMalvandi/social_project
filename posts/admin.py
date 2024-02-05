@@ -1,12 +1,32 @@
-# admin.py
-
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
+
 from .models import *
+
+
+class CommentInline(GenericTabularInline):
+    model = Comment
+    extra = 1
+
+
+class FileMediaInline(GenericTabularInline):
+    model = FileMedia
+    extra = 1
+
+
+class LikeInline(GenericTabularInline):
+    model = Like
+    extra = 1
 
 
 @admin.register(Story)
 class StoryAdmin(admin.ModelAdmin):
-    list_display = ['content', 'author', 'get_likes']
+    list_display = ['id', 'content', 'author', 'get_likes']
+    inlines = [
+        CommentInline,
+        LikeInline,
+        FileMediaInline
+    ]
 
     def get_likes(self, obj):
         likes = obj.likes.all()
@@ -15,19 +35,14 @@ class StoryAdmin(admin.ModelAdmin):
     get_likes.short_description = 'Likes'
 
 
-@admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ['author', 'body', 'replies', 'content_type']
-
-
-@admin.register(FileMedia)
-class FileMediaAdmin(admin.ModelAdmin):
-    list_display = ['file', 'content_type', 'object_id', 'content_object']
-
-
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['caption', 'author', 'get_likes', 'get_tags']
+    list_display = ['id', 'caption', 'author', 'get_likes', 'get_tags']
+    inlines = [
+        CommentInline,
+        LikeInline,
+        FileMediaInline
+    ]
 
     def get_likes(self, obj):
         likes = obj.likes.all()

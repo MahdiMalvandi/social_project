@@ -18,7 +18,10 @@ class Post(models.Model):
     files = GenericRelation('FileMedia', related_query_name='post_files')
     likes = GenericRelation("Like", null=True, blank=True, related_query_name='post_likes')
     is_active = models.BooleanField(default=True)
+    objects = models.Manager()
+
     actives = ActiveManager()
+
     created = models.DateTimeField(auto_now_add=True)
 
 
@@ -29,6 +32,8 @@ class Story(models.Model):
     comments = GenericRelation("Comment", null=True, blank=True)
     files = GenericRelation("FileMedia")
     is_active = models.BooleanField(default=True)
+    objects = models.Manager()
+
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
 
