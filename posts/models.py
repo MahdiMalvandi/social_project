@@ -1,3 +1,4 @@
+import re
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -19,10 +20,15 @@ class Post(models.Model):
     likes = GenericRelation("Like", null=True, blank=True, related_query_name='post_likes')
     is_active = models.BooleanField(default=True)
     objects = models.Manager()
-
     actives = ActiveManager()
-
     created = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            super().save(*args, **kwargs)
+            self.tags.add(*re.findall(r'#(\w+)', self.caption))
+        else:
+            super().save(*args, **kwargs)
 
 
 class Story(models.Model):

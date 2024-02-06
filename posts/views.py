@@ -1,5 +1,3 @@
-from django.contrib.contenttypes.models import ContentType
-from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework import status
@@ -27,6 +25,7 @@ class PostsApiViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         caption = request.data.get('caption', '')
+        print(caption)
         files_data = request.data.getlist('files', [])
         data = {'caption': caption, 'files': files_data}
         serializer = self.get_serializer(data=data, context={"request": request})

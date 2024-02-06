@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from .validators import *
 from users.serializers import UserDetailSerializer, UserSerializer
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 
 # region Like Serializer
 class LikeSerializer(serializers.ModelSerializer):
@@ -101,7 +103,7 @@ class FileMediaSerializer(serializers.ModelSerializer):
 # endregion
 
 # region Post Serializer
-class PostSerializer(serializers.ModelSerializer):
+class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     """
     Serializer for handling Post model.
 
@@ -117,10 +119,11 @@ class PostSerializer(serializers.ModelSerializer):
     files = FileMediaSerializer(read_only=True, many=True)
     comments_count = serializers.SerializerMethodField(read_only=True)
     is_liked = serializers.SerializerMethodField(read_only=True)
+    tags = TagListSerializerField()
 
     class Meta:
         model = Post
-        fields = ('id', 'caption', 'files', 'is_liked', 'author', 'comments_count', 'likes_count')
+        fields = ('id', 'caption', 'files', 'is_liked', 'author', 'comments_count', 'likes_count', 'tags')
 
     # Method Fields
     def get_is_liked(self, obj):
@@ -151,6 +154,8 @@ class PostSerializer(serializers.ModelSerializer):
         """
         return FileMediaSerializer(obj.files.all(), many=True, context={'request': self.context['request']}).data
 
+
+
 class PostCreateUpdateSerializer(serializers.Serializer):
     """
     Serializer for creating and updating Post instances.
@@ -170,7 +175,6 @@ class PostCreateUpdateSerializer(serializers.Serializer):
         """
         files_data = validated_data['files']
         post = Post.actives.create(caption=validated_data['caption'], author=self.context['request'].user)
-
         for file in files_data:
             file_obj = FileMedia.objects.create(
                 file=file,
