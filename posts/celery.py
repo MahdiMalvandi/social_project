@@ -10,4 +10,3 @@ app = Celery('social_project_celery')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
-print('---------------------------- start ------------------------------------')

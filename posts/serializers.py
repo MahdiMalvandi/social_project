@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from .validators import *
 from users.serializers import UserDetailSerializer, UserSerializer
 
 # region Like Serializer
@@ -42,11 +43,12 @@ class CommentSerializer(serializers.ModelSerializer):
         return comment_replies_data
 
 class CommentCreateUpdateSerializer(serializers.Serializer):
-    author = UserSerializer(read_only=True)
-    body = serializers.CharField(max_length=100000)
-    replies = serializers.CharField(max_length=10000000)
+    body = serializers.CharField(max_length=100000, min_length=3 ,validators=[ CommentValidator()])
+    replies = serializers.CharField(max_length=10000000, allow_null=True)
     object_id = serializers.CharField(max_length=1000000)
-    content_type = serializers.CharField(max_length=1000)
+    content_type = serializers.PrimaryKeyRelatedField(queryset=ContentType.objects.all())
+
+
 
     def create(self, validated_data):
         """
@@ -58,7 +60,7 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         Returns:
         - A Comment object.
         """
-        user = validated_data['author']
+        user = self.context['request'].user
         content_type = validated_data['content_type']
         object_id = validated_data['object_id']
 
@@ -74,19 +76,10 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
             content_type=content_type,
             object_id=object_id,
             body=validated_data['body'],
-            replies=replies_data if replies_data is not None else None
+            replies=replies if replies_data is not None else None
         )
 
         return comment
-
-    def validators(self, attrs):
-        print('validating')
-        print(attrs)
-        return attrs
-
-    def is_valid(self, *, raise_exception=False):
-        super().is_valid(raise_exception=True)
-        return None
 
 # endregion
 

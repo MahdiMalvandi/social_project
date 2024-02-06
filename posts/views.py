@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -63,24 +64,52 @@ class StoriesApiViewSet(ModelViewSet):
         return Response({'detail': 'Method not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class PostCommentView(APIView):
-    def get(self, request, pk, *args, **kwargs):
-        post_comments = Post.actives.get(pk=pk).comments.all()
-        serializer = CommentSerializer(post_comments, many=True)
-        return Response(serializer.data)
+class PostStoryInteractionBaseView(APIView):
+    """
+    Base API view for handling interactions (like, comment) on posts and stories.
+    """
+
+    def _validate_post_or_story(self, post_or_story, pk):
+        """
+        Validate 'post_or_story' parameter and retrieve the object.
+
+        Parameters:
+        - `post_or_story`: 'post' or 'story' to specify the type.
+        - `pk`: Primary key of the post or story.
+
+        Returns:
+        - Object: Post or Story object.
+        """
+        object_model = Story if post_or_story == 'story' else Post
+        try:
+            return object_model.actives.get(pk=pk)
+        except object_model.DoesNotExist:
+            raise NotFound("Object not found")
+
+    def _get_content_type(self, object):
+        """
+        Get ContentType for the object.
+
+        Parameters:
+        - `object`: Post or Story object.
+
+        Returns:
+        - ContentType: ContentType instance.
+        """
+        return ContentType.objects.get_for_model(object)
 
 
-class LikeApiView(APIView):
+class LikeApiView(PostStoryInteractionBaseView):
     """
     API view for handling likes and dislikes on posts and stories.
     """
 
     def post(self, request, post_or_story, pk):
         """
-        Handle POST requests for liking/disliking posts or stories.
+        Handles liking/disliking posts or stories.
 
         Parameters:
-        - `post_or_story`: Specify whether the object is a 'post' or a 'story'.
+        - `post_or_story`: 'post' or 'story' to specify the type.
         - `pk`: Primary key of the post or story.
 
         Returns:
@@ -94,48 +123,51 @@ class LikeApiView(APIView):
             return Response('"post_or_story" should be either a "post" or a "story"',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Get object based on 'post_or_story' and 'pk'
-        if post_or_story == 'story':
-            try:
-                object = Story.actives.get(pk=pk)
-            except Story.DoesNotExist:
-                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
-        else:
-            try:
-                object = Post.actives.get(pk=pk)
-            except Post.DoesNotExist:
-                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+        # Get the object based on 'post_or_story' and 'pk'
+        object = self._validate_post_or_story(post_or_story, pk)
 
         # Get ContentType for the object
-        content_type = ContentType.objects.get_for_model(object)
+        content_type = self._get_content_type(object)
 
         # Check if the user has already liked the object
         like = Like.objects.filter(user=user, content_type=content_type, object_id=object.pk)
 
         if like.exists():  # If user has liked, remove the like
-            like.first().delete()
-            data = {
-                'likes_count': object.likes.count(),
-                'detail': 'success',
-                'is_liked': False
-            }
+            like.delete()
+            is_liked = False
         else:  # If user has not liked, add a like
-            like_obj = Like.objects.create(
+            Like.objects.create(
                 user=user,
                 content_type=content_type,
                 object_id=object.pk
             )
-            data = {
-                'likes_count': object.likes.count(),
-                'detail': 'success',
-                'is_liked': True
-            }
+            is_liked = True
+
+        data = {
+            'likes_count': object.likes.count(),
+            'detail': 'success',
+            'is_liked': is_liked
+        }
 
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
-class CommentsApiView(APIView):
+class CommentsApiView(PostStoryInteractionBaseView):
+    """
+    API view for handling comments on posts and stories.
+    """
+
     def get(self, request, post_or_story, pk):
+        """
+        Retrieve comments for a post or story.
+
+        Parameters:
+        - `post_or_story`: 'post' or 'story' to specify the type.
+        - `pk`: Primary key of the post or story.
+
+        Returns:
+        - Response with comments data and status code.
+        """
         user = request.user
 
         # Validate 'post_or_story' parameter
@@ -143,26 +175,28 @@ class CommentsApiView(APIView):
             return Response('"post_or_story" should be either a "post" or a "story"',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Get object based on 'post_or_story' and 'pk'
-        if post_or_story == 'story':
-            try:
-                object = Story.actives.get(pk=pk)
-            except Story.DoesNotExist:
-                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
-        else:
-            try:
-                object = Post.actives.get(pk=pk)
-            except Post.DoesNotExist:
-                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+        # Get the object based on 'post_or_story' and 'pk'
+        object = self._validate_post_or_story(post_or_story, pk)
 
         # Get ContentType for the object
-        content_type = ContentType.objects.get_for_model(object)
+        content_type = self._get_content_type(object)
 
+        # Retrieve comments
         comments = Comment.objects.filter(content_type=content_type, object_id=object.id, replies=None)
         serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, post_or_story, pk):
+        """
+        Create a new comment on a post or story.
+
+        Parameters:
+        - `post_or_story`: 'post' or 'story' to specify the type.
+        - `pk`: Primary key of the post or story.
+
+        Returns:
+        - Response with comment data and status code.
+        """
         user = request.user
 
         # Validate 'post_or_story' parameter
@@ -170,29 +204,24 @@ class CommentsApiView(APIView):
             return Response('"post_or_story" should be either a "post" or a "story"',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Get object based on 'post_or_story' and 'pk'
-        if post_or_story == 'story':
-            try:
-                object = Story.actives.get(pk=pk)
-            except Story.DoesNotExist:
-                return Response("Story not found", status=status.HTTP_404_NOT_FOUND)
-        else:
-            try:
-                object = Post.actives.get(pk=pk)
-            except Post.DoesNotExist:
-                return Response('Post not found', status=status.HTTP_404_NOT_FOUND)
+        # Get the object based on 'post_or_story' and 'pk'
+        object = self._validate_post_or_story(post_or_story, pk)
 
         # Get ContentType for the object
-        content_type = ContentType.objects.get_for_model(object)
+        content_type = self._get_content_type(object)
+
+        # Create a new comment
         data = {
-            'author': user,
             'replies': request.data.get('replies'),
-            'content_type': content_type,
+            'content_type': content_type.pk,
             'object_id': object.id,
             'body': request.data['body']
         }
-        serializer = CommentCreateUpdateSerializer(data=data)
+        serializer = CommentCreateUpdateSerializer(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
+        # Return response
         response = {
             'message': 'success',
             'comments': CommentSerializer(object.comments.all(), many=True).data

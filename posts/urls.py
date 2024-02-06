@@ -6,8 +6,7 @@ router = DefaultRouter()
 router.register('posts', PostsApiViewSet, basename='posts')
 router.register('stories', StoriesApiViewSet, basename='stories', )
 urlpatterns = [
-    path('posts/<pk>/comments/', PostCommentView.as_view(), name='post comments'),
     path('like/<post_or_story>/<pk>/', LikeApiView.as_view(), name='like'),
-    path('comments/<post_or_story>/<pk>/', CommentsApiView.as_view(), name='')
+    path('comments/<post_or_story>/<pk>/', CommentsApiView.as_view(), name='comments')
 ]
 urlpatterns += router.urls
