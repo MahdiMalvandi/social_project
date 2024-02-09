@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from .validators import *
-from users.serializers import UserDetailSerializer, UserSerializer
+from users.serializers import UserSerializer
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
@@ -11,9 +11,9 @@ class LikeSerializer(serializers.ModelSerializer):
     Serializer for handling Like model.
 
     Fields:
-    - `author`: Serializes the author of the like using UserDetailSerializer.
+    - `author`: Serializes the author of the like using UserSerializer.
     """
-    author = UserDetailSerializer()
+    author = UserSerializer()
 
     class Meta:
         model = Like
@@ -27,10 +27,10 @@ class CommentSerializer(serializers.ModelSerializer):
     Serializer for handling Comment model.
 
     Fields:
-    - `author`: Serializes the author of the comment using UserDetailSerializer.
+    - `author`: Serializes the author of the comment using UserSerializer.
     - `replies`: Serializes the replies of the comment using CommentSerializer.
     """
-    author = UserDetailSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -108,13 +108,13 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     Serializer for handling Post model.
 
     Fields:
-    - `author`: Serializes the author of the post using UserDetailSerializer.
+    - `author`: Serializes the author of the post using UserSerializer.
     - `likes_count`: Serializes the count of likes on the post.
     - `files`: Serializes the files attached to the post using FileMediaSerializer.
     - `comments_count`: Serializes the count of comments on the post.
     - `is_liked`: Serializes whether the current user has liked the post.
     """
-    author = UserDetailSerializer()
+    author = UserSerializer()
     likes_count = serializers.SerializerMethodField()
     files = FileMediaSerializer(read_only=True, many=True)
     comments_count = serializers.SerializerMethodField(read_only=True)
@@ -194,12 +194,12 @@ class StorySerializer(serializers.ModelSerializer):
     Serializer for handling Story model.
 
     Fields:
-    - `author`: Serializes the author of the story using UserDetailSerializer.
+    - `author`: Serializes the author of the story using UserSerializer.
     - `likes`: Serializes the likes on the story using LikeSerializer.
     - `comments`: Serializes the comments on the story using CommentSerializer.
     - `files`: Serializes the files attached to the story using FileMediaSerializer.
     """
-    author = UserDetailSerializer()
+    author = UserSerializer()
     is_liked = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     files = serializers.SerializerMethodField()

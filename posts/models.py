@@ -1,6 +1,7 @@
 import re
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db import models
 from users.models import User
 from taggit.managers import TaggableManager
@@ -29,6 +30,12 @@ class Post(models.Model):
             self.tags.add(*re.findall(r'#(\w+)', self.caption))
         else:
             super().save(*args, **kwargs)
+
+    @classmethod
+    def search(cls, query):
+        return cls.objects.annotate(
+            similarity=TrigramSimilarity('caption', query)
+        ).filter(similarity__gt=0.1).order_by('-similarity')
 
 
 class Story(models.Model):

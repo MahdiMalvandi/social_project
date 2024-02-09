@@ -59,7 +59,7 @@ class RegisterAndSendEmail(APIView):
         if cached_code is not None:
             return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = UserSerializer(data=data)
+        user = UserRegisterSerializer(data=data)
         if user.is_valid():
             user.save()
             return send_code(email)

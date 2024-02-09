@@ -1,3 +1,4 @@
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db import models
 from django.core import validators
 from django.contrib.auth.models import AbstractBaseUser, UserManager, PermissionsMixin
@@ -83,6 +84,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         follow.delete()
         return True
 
+    @classmethod
+    def search(cls, query):
+        return cls.objects.annotate(
+            similarity=TrigramSimilarity('username', query) +
+                       TrigramSimilarity('first_name', query) +
+                       TrigramSimilarity('last_name', query)
+        ).filter(similarity__gt=0.1).order_by('-similarity')
+
 
 class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='following_relations', on_delete=models.CASCADE)
@@ -92,5 +101,3 @@ class Follow(models.Model):
 
     class Meta:
         unique_together = ('follower', 'following')
-
-
