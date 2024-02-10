@@ -175,13 +175,7 @@ class PostCreateUpdateSerializer(serializers.Serializer):
         """
         files_data = validated_data['files']
         post = Post.actives.create(caption=validated_data['caption'], author=self.context['request'].user)
-        for file in files_data:
-            file_obj = FileMedia.objects.create(
-                file=file,
-                content_type=ContentType.objects.get_for_model(Post),
-                object_id=post.id
-            )
-            file_obj.save()
+
 
         post.save()
         return post

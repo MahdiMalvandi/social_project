@@ -8,6 +8,8 @@ from taggit.models import Tag
 
 from .serializers import *
 from django.contrib.contenttypes.models import ContentType
+from .tasks import upload_files
+from .tools import save_file_to_disk
 
 
 class PostsApiViewSet(ModelViewSet):
@@ -47,7 +49,9 @@ class PostsApiViewSet(ModelViewSet):
         data = {'caption': caption, 'files': files_data}
         serializer = self.get_serializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        post = serializer.save()
+        upload_files.delay(files_data, post.id)
+
         return Response({'success': True, 'detail': "post created successfully"}, status=status.HTTP_201_CREATED)
     # endregion
 
@@ -280,9 +284,9 @@ class SearchApiView(APIView):
             return Response('type must be post or user', status=status.HTTP_400_BAD_REQUEST)
 
         data = {
-                'query': query,
-                'result': result
-            }
+            'query': query,
+            'result': result
+        }
         return Response(data, status=status.HTTP_200_OK)
 
 
