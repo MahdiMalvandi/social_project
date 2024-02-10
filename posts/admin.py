@@ -21,7 +21,7 @@ class LikeInline(GenericTabularInline):
 
 @admin.register(Story)
 class StoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'content', 'author', 'get_likes']
+    list_display = ['id', 'content', 'author', 'get_likes', 'created']
     inlines = [
         CommentInline,
         LikeInline,

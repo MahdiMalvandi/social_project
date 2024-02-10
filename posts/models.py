@@ -23,6 +23,7 @@ class Post(models.Model):
     objects = models.Manager()
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -49,6 +50,7 @@ class Story(models.Model):
 
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Story by {self.author.username}"

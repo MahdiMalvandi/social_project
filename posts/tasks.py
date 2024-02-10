@@ -1,11 +1,10 @@
 from celery import shared_task
 from django.utils import timezone
-from .models import Post
+from .models import Story
 
 @shared_task
 def deactivate_stories():
-    print('task run')
-    active_stories = Post.actives.filter(created__lte=timezone.now() - timezone.timedelta(seconds=10))
+    active_stories = Story.actives.filter(created__lt=timezone.now() - timezone.timedelta(hours=1))
     for story in active_stories:
         story.is_active = False
         story.save()
