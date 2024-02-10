@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from .functions import send_code
 from users.models import User
 from .serializers import *
+from posts.serializers import PostSerializer, StorySerializer
 from posts.models import Post
 
 
@@ -115,4 +116,21 @@ class ResendCode(APIView):
 
         return send_code(email)
 
+
 # endregion
+
+class UserProfileView(APIView):
+    def get(self, request, username, *args, **kwargs):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response("User Not Found", status=status.HTTP_404_NOT_FOUND)
+        user_serializer = UserSerializer(user, context={"request": request})
+        user_post_serializer = PostSerializer(user.posts.all(), many=True, context={"request": request})
+        user_story_serializer = StorySerializer(user.stories.all(), many=True, context={"request": request})
+        data = {
+            'user_info': user_serializer.data,
+            'posts': user_post_serializer.data,
+            'stories': user_story_serializer.data
+        }
+        return Response(data)
