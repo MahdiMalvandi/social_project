@@ -11,4 +11,5 @@ urlpatterns = [
     path('users/<username>/', UserProfileView.as_view(), name='user_profile'),
     path('follow/<username>/', UserFollowApi.as_view(), name='user follow'),
     path('profile/', ProfileApiView.as_view(), name='profile'),
+    path('logout/', LogoutView.as_view(), name='auth_logout'),
 ]

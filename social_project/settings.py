@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'celery',
     'django_celery_beat',
-
+    'rest_framework_simplejwt.token_blacklist',
 
 
     # Apps
@@ -158,6 +158,8 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True
 }
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
