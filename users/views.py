@@ -128,9 +128,29 @@ class UserProfileView(APIView):
         user_serializer = UserSerializer(user, context={"request": request})
         user_post_serializer = PostSerializer(user.posts.all(), many=True, context={"request": request})
         user_story_serializer = StorySerializer(user.stories.all(), many=True, context={"request": request})
+        if user in request.user.following_users:
+            is_following = True
+        else:
+            is_following = False
         data = {
             'user_info': user_serializer.data,
             'posts': user_post_serializer.data,
-            'stories': user_story_serializer.data
+            'stories': user_story_serializer.data,
+            'is_following': is_following
         }
         return Response(data)
+
+
+class UserFollowApi(APIView):
+    def post(self, request, username, *args, **kwargs):
+        current_user = request.user
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response("User Not Found", status=status.HTTP_404_NOT_FOUND)
+        obj, created = Follow.objects.get_or_create(follower=current_user, following=user)
+        if created:
+            return Response({'message': "following successfully", 'is_following': True}, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': "unfollowing successfully", 'is_following': False}, status=status.HTTP_200_OK)
+
