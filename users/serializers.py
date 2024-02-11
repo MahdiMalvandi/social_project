@@ -55,3 +55,35 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'date_of_birth', 'bio')
 
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender')
+        extra_kwargs = {
+            "first_name": {"required": False},
+            "last_name": {"required": False},
+            "username": {"required": False},
+            "email": {"required": False},
+            "phone_number": {"required": False},
+            "profile": {"required": False},
+            "gender": {"required": False},
+        }
+
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError({"email": "This email is already in use."})
+        return value
+
+    def validate_username(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise serializers.ValidationError({"username": "This username is already in use."})
+        return value
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance

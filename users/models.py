@@ -6,7 +6,7 @@ from django.utils import timezone
 
 
 def user_profile_upload_path(instance, filename):
-    return f"profiles/{instance.user.username}/{filename}"
+    return f"profiles/{instance.username}/{filename}"
 
 
 class User(AbstractBaseUser, PermissionsMixin):

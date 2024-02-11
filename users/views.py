@@ -154,3 +154,22 @@ class UserFollowApi(APIView):
         else:
             return Response({'message': "unfollowing successfully", 'is_following': False}, status=status.HTTP_200_OK)
 
+
+class ProfileApiView(APIView):
+    def get(self, request, *args, **kwargs):
+        current_user = request.user
+        user_serializer = UserSerializer(current_user, context={"request": request})
+        user_post_serializer = PostSerializer(current_user.posts.all(), many=True, context={"request": request})
+        user_story_serializer = StorySerializer(current_user.stories.all(), many=True, context={"request": request})
+        data = {
+            'user_info': user_serializer.data,
+            'posts': user_post_serializer.data,
+            'stories': user_story_serializer.data,
+        }
+        return Response(data)
+
+    def put(self, request, *args, **kwargs):
+        serializer = UpdateUserSerializer(instance=request.user, data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

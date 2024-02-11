@@ -15,16 +15,16 @@ def deactivate_stories():
         story.save()
 
 
-@app.task
-def upload_files(file_paths, post_id):
-    for file_path in file_paths:
-        sleep(3)
-        with open(file_path, 'rb') as file_data:
-            file_obj = FileMedia.objects.create(
-                file=file_data,
-                content_type=ContentType.objects.get_for_model(Post),
-                object_id=post_id
-            )
-            file_obj.save()
-            print(f'file: {file_obj} uploaded')
-    return {"status": True}
+# @app.task
+# def upload_files(file_paths, post_id):
+#     for file_path in file_paths:
+#         sleep(3)
+#         with open(file_path, 'rb') as file_data:
+#             file_obj = FileMedia.objects.create(
+#                 file=file_data,
+#                 content_type=ContentType.objects.get_for_model(Post),
+#                 object_id=post_id
+#             )
+#             file_obj.save()
+#             print(f'file: {file_obj} uploaded')
+#     return {"status": True}

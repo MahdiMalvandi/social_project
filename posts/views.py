@@ -8,8 +8,8 @@ from taggit.models import Tag
 
 from .serializers import *
 from django.contrib.contenttypes.models import ContentType
-from .tasks import upload_files
-from .tools import save_file_to_disk
+# from .tasks import upload_files
+# from .tools import save_file_to_disk
 
 
 class PostsApiViewSet(ModelViewSet):
@@ -50,7 +50,7 @@ class PostsApiViewSet(ModelViewSet):
         serializer = self.get_serializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         post = serializer.save()
-        upload_files.delay(files_data, post.id)
+        # upload_files.delay(files_data, post.id)
 
         return Response({'success': True, 'detail': "post created successfully"}, status=status.HTTP_201_CREATED)
     # endregion

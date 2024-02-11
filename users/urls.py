@@ -9,5 +9,6 @@ urlpatterns = [
     path('resend/', ResendCode.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/<username>/', UserProfileView.as_view(), name='user_profile'),
-    path('follow/<username>/', UserFollowApi.as_view(), name='user follow')
+    path('follow/<username>/', UserFollowApi.as_view(), name='user follow'),
+    path('profile/', ProfileApiView.as_view(), name='profile'),
 ]
