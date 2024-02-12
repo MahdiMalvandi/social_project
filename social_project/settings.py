@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'celery',
     'django_celery_beat',
     'rest_framework_simplejwt.token_blacklist',
-
+    'django_rest_passwordreset',
 
     # Apps
     'users',

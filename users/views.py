@@ -33,22 +33,22 @@ class LoginView(APIView):
         if not user.is_auth:
             return Response(status=status.HTTP_403_FORBIDDEN, data={'error': 'User has to verify email'})
         if user.check_password(data['password']):
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token_str = str(refresh)
-            response_data = {'access_token': access_token, 'refresh_token': refresh_token_str}
-            return JsonResponse(response_data, status=status.HTTP_200_OK)
+            cache_key = f'email_verification:{email}'
+            cached_code = cache.get(cache_key)
+            if cached_code is not None:
+                return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
+            return send_code(email)
         return Response({'error': 'Password is incorrect'}, status=status.HTTP_403_FORBIDDEN)
 
 
 class RegisterAndSendEmail(APIView):
+    permission_classes = [AllowAny]
+
     """
     Get User Data and Make an object and send verification email
     """
 
     def post(self, request, *args, **kwargs):
-        permission_classes = [AllowAny]
-
         data = request.data
 
         email = data['email'] if 'email' in data else None
@@ -86,6 +86,7 @@ class GetUserToken(APIView):
             refresh_token_str = str(refresh)
             cache.delete(cache_key)
             user.is_auth = True
+            user.is_active = True
             user.save()
             response_data = {'access_token': access_token, 'refresh_token': refresh_token_str}
             return JsonResponse(response_data, status=status.HTTP_200_OK)
@@ -180,4 +181,5 @@ class LogoutView(APIView):
         sz = RefreshTokenSerializer(data=request.data)
         sz.is_valid(raise_exception=True)
         sz.save()
+        request.user.is_active = False
         return Response(status=status.HTTP_204_NO_CONTENT)

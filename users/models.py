@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     following = models.ManyToManyField('self', through='Follow', related_name='following_users', symmetrical=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone_number']
