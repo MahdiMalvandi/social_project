@@ -1,5 +1,6 @@
 from django.db.models import Count
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -8,13 +9,12 @@ from taggit.models import Tag
 
 from .serializers import *
 from django.contrib.contenttypes.models import ContentType
-# from .tasks import upload_files
-# from .tools import save_file_to_disk
 
 
 class PostsApiViewSet(ModelViewSet):
     queryset = Post.actives.all()
     serializer_class = PostSerializer
+    pagination_class = PageNumberPagination
 
     """
     This view set handles the retrieval and creation of posts.
