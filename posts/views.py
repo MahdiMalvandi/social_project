@@ -49,8 +49,7 @@ class PostsApiViewSet(ModelViewSet):
         data = {'caption': caption, 'files': files_data}
         serializer = self.get_serializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        post = serializer.save()
-        # upload_files.delay(files_data, post.id)
+        serializer.save()
 
         return Response({'success': True, 'detail': "post created successfully"}, status=status.HTTP_201_CREATED)
     # endregion
@@ -82,6 +81,10 @@ class StoriesApiViewSet(ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
+        if request.data.get('content') is None:
+            return Response('The caption must not be empty', status=status.HTTP_400_BAD_REQUEST)
+        if request.data.get('files') is None:
+            return Response('There must be at least one file', status=status.HTTP_400_BAD_REQUEST)
         content = request.data.get('content', '')
         files_data = request.data.getlist('files', [])
         data = {'content': content, 'files': files_data}
@@ -239,7 +242,8 @@ class CommentsApiView(PostStoryInteractionBaseView):
         if post_or_story not in ['post', 'story']:
             return Response('"post_or_story" should be either a "post" or a "story"',
                             status=status.HTTP_400_BAD_REQUEST)
-
+        if 'body' not in request.data:
+            return Response({'error': 'body is required'}, status=status.HTTP_400_BAD_REQUEST)
         # Get the object based on 'post_or_story' and 'pk'
         object = self._validate_post_or_story(post_or_story, pk)
 
@@ -248,7 +252,7 @@ class CommentsApiView(PostStoryInteractionBaseView):
 
         # Create a new comment
         data = {
-            'replies': request.data.get('replies'),
+            'replies': request.data.get('replies') if 'replies' in request.data else None,
             'content_type': content_type.pk,
             'object_id': object.id,
             'body': request.data['body']
@@ -269,10 +273,10 @@ class CommentsApiView(PostStoryInteractionBaseView):
 class SearchApiView(APIView):
     def get(self, request, *args, **kwargs):
         if 'query' not in request.GET:
-            return Response('There must be a query', status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": 'There must be a query'}, status=status.HTTP_400_BAD_REQUEST)
 
         if 'type' not in request.GET:
-            return Response('There must be a type', status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": 'There must be a type'}, status=status.HTTP_400_BAD_REQUEST)
 
         query = request.GET.get('query')
 
@@ -281,7 +285,7 @@ class SearchApiView(APIView):
         elif request.GET.get('type') == "post":
             result = PostSerializer(Post.search(query), many=True, context={'request': request}).data
         else:
-            return Response('type must be post or user', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'type must be post or user'}, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
             'query': query,

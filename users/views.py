@@ -19,13 +19,10 @@ class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         email = data['email'] if 'email' in data else None
-        username = data['username'] if 'username' in data else None
-        if email is None and username is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Invalid email or username'})
+        if email is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email Cannot be empty'})
         try:
-            if username is not None:
-                user = User.objects.get(username=username)
-            elif email is not None:
+            if email is not None:
                 user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND, data={'error': 'user not found'})
@@ -71,8 +68,14 @@ class GetUserToken(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        user_email = request.data.get('email', '')
-        verification_code = request.data.get('code', '')
+        user_email = request.data['email'] if 'email' in request.data else None
+        verification_code = request.data['code'] if 'code' in request.data else None
+
+        if user_email is None:
+            return Response({'error': "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if verification_code is None:
+            return Response({'error': "Code cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         cache_key = f'email_verification:{user_email}'
 
@@ -91,7 +94,7 @@ class GetUserToken(APIView):
             response_data = {'access_token': access_token, 'refresh_token': refresh_token_str}
             return JsonResponse(response_data, status=status.HTTP_200_OK)
         elif stored_verification_code is None:
-            return Response({"error": "There is no code"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "The verification code either does not exist or has expired"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'detail': 'Invalid verification code'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -100,20 +103,20 @@ class ResendCode(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        email = request.data['email']
+        email = request.data['email'] if 'email' in request.data else None
         cache_key = f'email_verification:{email}'
-
-        stored_verification_code = cache.get(cache_key)
-        if stored_verification_code is not None:
-            return Response({'error': 'verification code sent successfully'}, status=status.HTTP_403_FORBIDDEN)
+        if email is None:
+            return Response({'error': "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response({'error': "User not found"})
-
         if user.is_auth:
             return Response({"error": "The user has already been verified and must login"},
                             status=status.HTTP_403_FORBIDDEN)
+        stored_verification_code = cache.get(cache_key)
+        if stored_verification_code is not None:
+            cache.delete(stored_verification_code)
 
         return send_code(email)
 

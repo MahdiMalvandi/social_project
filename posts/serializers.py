@@ -32,6 +32,7 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField(read_only=True)
+    body = serializers.CharField(validators=[CommentValidator()])
 
     class Meta:
         model = Comment
@@ -82,6 +83,13 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         )
 
         return comment
+
+    def validate_body(self, value):
+        bad_words = ['fuck', 'احمق']  # and other bad words
+        for word in bad_words:
+            value = value.replace(word, '*' * len(word))
+        return value
+
 
 # endregion
 
