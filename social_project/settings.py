@@ -12,6 +12,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -30,11 +31,13 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'rest_framework_simplejwt.token_blacklist',
     'django_rest_passwordreset',
+    'channels',
 
     # Apps
     'users',
     'posts',
     'admin_panel',
+    'chat',
 
 ]
 
@@ -72,7 +75,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'social_project.wsgi.application'
+# WSGI_APPLICATION = 'social_project.wsgi.application'
+ASGI_APPLICATION = 'social_project.asgi.application'
 
 DATABASES = {
     'default': {
@@ -176,5 +180,13 @@ CELERY_BEAT_SCHEDULE = {
     'deactivate-stories': {
         'task': 'posts.tasks.deactivate_stories',
         'schedule': 10,
+    },
+}
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
     },
 }

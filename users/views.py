@@ -19,22 +19,25 @@ class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         email = data['email'] if 'email' in data else None
-        if email is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email Cannot be empty'})
+        username = data['username'] if 'username' in data else None
+        if email is None and username is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email or Username Cannot be empty'})
         try:
             if email is not None:
                 user = User.objects.get(email=email)
+            elif username is not None:
+                user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND, data={'error': 'user not found'})
 
         if not user.is_auth:
             return Response(status=status.HTTP_403_FORBIDDEN, data={'error': 'User has to verify email'})
         if user.check_password(data['password']):
-            cache_key = f'email_verification:{email}'
+            cache_key = f'email_verification:{user.email}'
             cached_code = cache.get(cache_key)
             if cached_code is not None:
                 return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
-            return send_code(email)
+            return send_code(user.email)
         return Response({'error': 'Password is incorrect'}, status=status.HTTP_403_FORBIDDEN)
 
 
@@ -57,7 +60,7 @@ class RegisterAndSendEmail(APIView):
         if cached_code is not None:
             return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = UserRegisterSerializer(data=data)
+        user = UserSerializer(data=data)
         if user.is_valid():
             user.save()
             return send_code(email)

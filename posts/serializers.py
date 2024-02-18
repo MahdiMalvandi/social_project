@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import *
-from .validators import *
 from users.serializers import UserSerializer
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
@@ -32,7 +31,7 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField(read_only=True)
-    body = serializers.CharField(validators=[CommentValidator()])
+    body = serializers.CharField()
 
     class Meta:
         model = Comment
@@ -46,7 +45,7 @@ class CommentSerializer(serializers.ModelSerializer):
         return comment_replies_data
 
 class CommentCreateUpdateSerializer(serializers.Serializer):
-    body = serializers.CharField(max_length=100000, min_length=3 ,validators=[ CommentValidator()])
+    body = serializers.CharField(max_length=100000, min_length=3)
     replies = serializers.CharField(max_length=10000000, allow_null=True)
     object_id = serializers.CharField(max_length=1000000)
     content_type = serializers.PrimaryKeyRelatedField(queryset=ContentType.objects.all())

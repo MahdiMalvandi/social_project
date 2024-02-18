@@ -28,7 +28,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('', include('posts.urls')),
-    # path('', include('chat.urls')),
+    path('chat/', include('chat.urls')),
     path('', include('admin_panel.urls')),
 
 

@@ -8,10 +8,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import *
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
+# class UserRegisterSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ('first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'password')
+
+
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'password')
+        fields = (
+            'first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'date_of_birth', 'bio',
+            'password')
+        extra_args = {'password': {"write_only": True}}
 
     def validate(self, data):
 
@@ -35,8 +44,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         lowercase = r'[a-z]'
         regex = f'^(?=.*{length})(?=.*{special_chars})(?=.*{digit})(?=.*{uppercase})(?=.*{lowercase}).+$'
 
-        if not (8 <= len(password) and re.match(regex, password)):
-            raise serializers.ValidationError('Password is Weak')
+        # if not (8 <= len(password) and re.match(regex, password)):
+        #     raise serializers.ValidationError('Password is Weak')
 
         return data
 
@@ -50,13 +59,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if 'password' in validated_data:
             validated_data['password'] = make_password(validated_data['password'])
         return super().update(instance, validated_data)
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'first_name', 'last_name', 'username', 'email', 'phone_number', 'profile', 'gender', 'date_of_birth', 'bio')
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
