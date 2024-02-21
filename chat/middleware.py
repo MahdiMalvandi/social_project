@@ -13,7 +13,6 @@ User = get_user_model()
 
 class JWTWebsocketMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        print('middleware run')
         query_string = scope.get('query_string', b'').decode('utf-8')
         query_parameters = dict(qp.split('=') for qp in query_string.split('&'))
         token = query_parameters.get("token", None)
@@ -36,7 +35,6 @@ class JWTWebsocketMiddleware(BaseMiddleware):
                 'code': 4000
             })
         try:
-            print('decoding started')
             # Decode the token
             decoded_data = UntypedToken(token).payload
 
@@ -51,17 +49,13 @@ class JWTWebsocketMiddleware(BaseMiddleware):
             # If everything is fine, you can proceed
             # For example, you may set the user in the scope
             scope['user'] = user
-            print('decoding ended')
-            print(f'current user =>{user}')
             if not await self.user_participant(conversation, user):
-                print(str("You are not allowed"))
                 await send({
                     "type": "websocket.close",
                     'code': 4001,
                     'error': str("You are not allowed")
                 })
         except (InvalidToken, TokenError, KeyError) as e:
-            print('invalid token')
             await send({
                 "type": "websocket.close",
                 'code': 4001,
