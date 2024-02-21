@@ -4,11 +4,18 @@ from rest_framework import serializers
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer()
+    sent = serializers.SerializerMethodField()
+
     class Meta:
         model = Message
-        fields = ('timestamp', 'text', )
+        fields = ('timestamp', 'text', 'sender', 'sent')
 
-
+    def get_sent(self, instance):
+        if instance.sender == self.context['request'].user:
+            return True
+        else:
+            return False
 
 
 class ConversationListSerializer(serializers.ModelSerializer):
@@ -18,18 +25,23 @@ class ConversationListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conversation
-        fields = ['initiator', 'receiver', 'last_message']
+        fields = ['initiator', 'receiver', 'last_message', 'id']
+        extra_kwargs = {'id': {'read_only': True}}
 
     def get_last_message(self, instance):
-        message = instance.message_set.first()
-        return MessageSerializer(instance=message)
+        message = instance.messages.first()
+        print(message)
+        return MessageSerializer(message).data
 
 
 class ConversationSerializer(serializers.ModelSerializer):
     initiator = UserSerializer()
     receiver = UserSerializer()
-    message_set = MessageSerializer(many=True)
+    messages = MessageSerializer(many=True)
+
 
     class Meta:
         model = Conversation
-        fields = ['initiator', 'receiver', 'message_set']
+        fields = ['initiator', 'receiver', 'messages']
+
+

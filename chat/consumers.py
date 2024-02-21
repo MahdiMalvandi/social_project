@@ -41,8 +41,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user_by_id(self, user_id):
-            # Retrieve the user from the database using the user_id
-            return User.objects.get(id=user_id)
+        # Retrieve the user from the database using the user_id
+        return User.objects.get(id=user_id)
+
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(
@@ -92,4 +93,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             conversation_id=conversation
         )
         return mes
-

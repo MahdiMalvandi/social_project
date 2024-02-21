@@ -1,7 +1,5 @@
-from django.shortcuts import render
-
 from users.serializers import UserSerializer
-from .models import Conversation
+from .models import Conversation, Message
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from users.models import User
@@ -12,9 +10,8 @@ from django.shortcuts import redirect, reverse
 
 # Create your views here.
 @api_view(['POST'])
-def start_convo(request, ):
+def start_conversation(request, username):
     data = request.data
-    username = data.pop('username')
     try:
         participant = User.objects.get(username=username)
     except User.DoesNotExist:
@@ -26,6 +23,12 @@ def start_convo(request, ):
         return redirect(reverse('get_conversation', args=(conversation[0].id,)))
     else:
         conversation = Conversation.objects.create(initiator=request.user, receiver=participant)
+        if 'message' in data:
+            if 'text' not in data:
+                return Response({'error': "You have to provide a message text"}, status=400)
+            if 'receiver' not in data:
+                return Response({'error': "You have to provide receiver username"}, status=400)
+            Message.objects.create(sender=request.user, text=data['text'], conversation=conversation)
         return Response(ConversationSerializer(instance=conversation).data)
 
 
@@ -35,7 +38,7 @@ def get_conversation(request, convo_id):
     if not conversation.exists():
         return Response({'message': 'Conversation does not exist'})
     else:
-        serializer = ConversationSerializer(instance=conversation[0])
+        serializer = ConversationSerializer(instance=conversation[0], context={'request': request})
         return Response(serializer.data)
 
 
@@ -43,12 +46,6 @@ def get_conversation(request, convo_id):
 def conversations(request):
     conversation_list = Conversation.objects.filter(Q(initiator=request.user) |
                                                     Q(receiver=request.user))
-    serializer = ConversationListSerializer(instance=conversation_list, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def user_list(request, ):
-    users = User.objects.all().order_by('username')
-    serializer = UserSerializer(instance=users, many=True)
+    print(conversation_list)
+    serializer = ConversationListSerializer(conversation_list, many=True)
     return Response(serializer.data)
