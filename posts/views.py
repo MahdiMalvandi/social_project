@@ -317,3 +317,27 @@ class PopularTagsAPIView(APIView):
 
         serialized_tags = [{'name': tag.name, 'num_posts': tag.num_posts} for tag in popular_tags]
         return Response(serialized_tags)
+
+
+class SavedPostsListApiView(APIView):
+    def get(self, request, *args, **kwargs):
+        user_saved_posts = request.user.saved_posts.all()
+        print(user_saved_posts)
+        serializer = PostSerializer(user_saved_posts, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SavedPostsApiView(APIView):
+
+    def post(self, request, post_id):
+        try:
+            post = Post.actives.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({'error': 'Post Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+        if request.user in post.saved.all():
+            post.saved.remove(request.user)
+            return Response({'message': "Post has not been saved!", 'is_saved': False}, status=status.HTTP_200_OK)
+        else:
+            post.saved.add(request.user)
+            return Response({'message': "Post has been saved!", 'is_saved': True}, status=status.HTTP_200_OK)
+

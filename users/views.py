@@ -135,7 +135,7 @@ class UserProfileView(APIView):
         user_serializer = UserSerializer(user, context={"request": request})
         user_post_serializer = PostSerializer(user.posts.all(), many=True, context={"request": request})
         user_story_serializer = StorySerializer(user.stories.all(), many=True, context={"request": request})
-        if user in request.user.following_users:
+        if user in request.user.following_users.all():
             is_following = True
         else:
             is_following = False

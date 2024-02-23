@@ -24,6 +24,7 @@ class Post(models.Model):
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    saved = models.ManyToManyField(User, related_name='saved_posts')
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -89,3 +90,4 @@ class FileMedia(models.Model):
 
     def __str__(self):
         return f"{self.file.name} - {self.content_object}"
+
