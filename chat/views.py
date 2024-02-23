@@ -46,6 +46,5 @@ def get_conversation(request, convo_id):
 def conversations(request):
     conversation_list = Conversation.objects.filter(Q(initiator=request.user) |
                                                     Q(receiver=request.user))
-    print(conversation_list)
     serializer = ConversationListSerializer(conversation_list, many=True)
     return Response(serializer.data)
