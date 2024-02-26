@@ -17,7 +17,7 @@ def send_code(email):
            f"Thank you for choosing our platform!" \
            f"To complete the account verification process, " \
            "Once you click the link, you will be prompted to enter the verification code provided below:" \
-           f"Verification Code: {verification_code}This code is used to ensure the security of your account." \
+           f"Verification Code: {verification_code} This code is used to ensure the security of your account." \
            f" If you did not request this verification, please ignore this email." \
            f"Thank you, Mahdi Malvandi Social Media"
 

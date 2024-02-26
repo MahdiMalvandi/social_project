@@ -17,3 +17,4 @@ def notification_created(sender, instance, created, **kwargs):
                 "message": serializer.data
             }
         )
+        print(f'notif sent to {instance.user.username}')

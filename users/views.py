@@ -159,6 +159,7 @@ class UserFollowApi(APIView):
         if created:
             return Response({'message': "following successfully", 'is_following': True}, status=status.HTTP_200_OK)
         else:
+            obj.delete()
             return Response({'message': "unfollowing successfully", 'is_following': False}, status=status.HTTP_200_OK)
 
 

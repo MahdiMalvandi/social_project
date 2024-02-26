@@ -1,14 +1,25 @@
-from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.db.models.signals import post_save, post_delete
+from .models import User, Follow
+from notification.models import Notification
 from django.dispatch import receiver
 
-# ایجاد یک سیگنال برای ورود کاربر
-@receiver(user_logged_in)
-def user_login(sender, request, user, **kwargs):
-    user.is_online = True
-    print(f'user {user} logged in and his is_online is {user.is_online}')
 
-# ایجاد یک سیگنال برای خروج کاربر
-@receiver(user_logged_out)
-def user_logout(sender, request, user, **kwargs):
-    user.is_online = False
-    print(f'user {user} logged out and his is_online is {user.is_online}')
+@receiver(post_save, sender=Follow)
+def add_notification_for_follow(sender, instance, created, **kwargs):
+    if created:
+        notif_message = f'User {instance.follower.get_full_name()} followed you with @{instance.follower.username} ID'
+        notif_obj = Notification.objects.create(
+            user=instance.following,
+            message=notif_message
+        )
+        notif_obj.save()
+
+
+@receiver(post_delete, sender=Follow)
+def add_notification_for_follow(sender, instance, **kwargs):
+    notif_message = f'User {instance.follower.get_full_name()} unfollowed you with @{instance.follower.username} ID'
+    notif_obj = Notification.objects.create(
+        user=instance.following,
+         message=notif_message
+    )
+    notif_obj.save()
