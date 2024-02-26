@@ -12,7 +12,7 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ('timestamp', 'text', 'sender', 'sent')
 
     def get_sent(self, instance):
-        if instance.sender == self.context['request'].user:
+        if instance.sender == self.context['user']:
             return True
         else:
             return False
