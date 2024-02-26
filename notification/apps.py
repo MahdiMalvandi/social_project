@@ -1,11 +1,9 @@
 from django.apps import AppConfig
 
 
-class PostsConfig(AppConfig):
+class NotificationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'posts'
+    name = 'notification'
 
     def ready(self):
         from . import signals
-
-
