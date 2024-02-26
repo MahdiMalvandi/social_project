@@ -186,7 +186,7 @@ class LikeApiView(PostStoryInteractionBaseView):
             'is_liked': is_liked
         }
 
-        return Response(data, status=status.HTTP_204_NO_CONTENT)
+        return Response(data, status=status.HTTP_200_OK)
     # endregion
 
 
