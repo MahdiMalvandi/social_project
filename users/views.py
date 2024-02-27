@@ -9,55 +9,73 @@ from .functions import send_code
 from users.models import User
 from .serializers import *
 from posts.serializers import PostSerializer, StorySerializer
-from posts.models import Post
 
 
-# region login and registration
 class LoginView(APIView):
+    """
+    API view for user login.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        """
+        Handle POST request for user login.
+
+        Parameters:
+        - request: Request object containing user data.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with login status and appropriate message.
+        """
         data = request.data
-        email = data['email'] if 'email' in data else None
-        username = data['username'] if 'username' in data else None
-        if email is None and username is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email or Username Cannot be empty'})
+        email = data.get('email')
+        username = data.get('username')
+        if not email and not username:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email or Username cannot be empty'})
         try:
-            if email is not None:
-                user = User.objects.get(email=email)
-            elif username is not None:
-                user = User.objects.get(username=username)
+            user = User.objects.get(email=email) if email else User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND, data={'error': 'user not found'})
+            return Response(status=status.HTTP_404_NOT_FOUND, data={'error': 'User not found'})
 
         if not user.is_auth:
             return Response(status=status.HTTP_403_FORBIDDEN, data={'error': 'User has to verify email'})
         if user.check_password(data['password']):
             cache_key = f'email_verification:{user.email}'
             cached_code = cache.get(cache_key)
-            if cached_code is not None:
+            if cached_code:
                 return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
             return send_code(user.email)
         return Response({'error': 'Password is incorrect'}, status=status.HTTP_403_FORBIDDEN)
 
 
 class RegisterAndSendEmail(APIView):
+    """
+    API view for user registration and sending verification email.
+    """
     permission_classes = [AllowAny]
 
-    """
-    Get User Data and Make an object and send verification email
-    """
-
     def post(self, request, *args, **kwargs):
-        data = request.data
+        """
+        Handle POST request for user registration and sending verification email.
 
-        email = data['email'] if 'email' in data else None
-        if email is None:
+        Parameters:
+        - request: Request object containing user data.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with registration status and appropriate message.
+        """
+        data = request.data
+        email = data.get('email')
+        if not email:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Invalid email'})
 
         cache_key = f'email_verification:{email}'
         cached_code = cache.get(cache_key)
-        if cached_code is not None:
+        if cached_code:
             return Response({'error': 'Verification code already sent'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = UserSerializer(data=data)
@@ -68,20 +86,33 @@ class RegisterAndSendEmail(APIView):
 
 
 class GetUserToken(APIView):
+    """
+    API view for getting user token after verification.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        user_email = request.data['email'] if 'email' in request.data else None
-        verification_code = request.data['code'] if 'code' in request.data else None
+        """
+        Handle POST request for getting user token after verification.
 
-        if user_email is None:
+        Parameters:
+        - request: Request object containing user email and verification code.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with user token if verification successful.
+        """
+        user_email = request.data.get('email')
+        verification_code = request.data.get('code')
+
+        if not user_email:
             return Response({'error': "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if verification_code is None:
+        if not verification_code:
             return Response({'error': "Code cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         cache_key = f'email_verification:{user_email}'
-
         stored_verification_code = cache.get(cache_key)
 
         if stored_verification_code == verification_code:
@@ -97,18 +128,33 @@ class GetUserToken(APIView):
             response_data = {'access_token': access_token, 'refresh_token': refresh_token_str}
             return JsonResponse(response_data, status=status.HTTP_200_OK)
         elif stored_verification_code is None:
-            return Response({"error": "The verification code either does not exist or has expired"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "The verification code either does not exist or has expired"},
+                            status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'detail': 'Invalid verification code'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class ResendCode(APIView):
+    """
+    API view for resending verification code.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        email = request.data['email'] if 'email' in request.data else None
+        """
+        Handle POST request for resending verification code.
+
+        Parameters:
+        - request: Request object containing user email.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with status of code resend.
+        """
+        email = request.data.get('email')
         cache_key = f'email_verification:{email}'
-        if email is None:
+        if not email:
             return Response({'error': "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(email=email)
@@ -118,7 +164,7 @@ class ResendCode(APIView):
             return Response({"error": "The user has already been verified and must login"},
                             status=status.HTTP_403_FORBIDDEN)
         stored_verification_code = cache.get(cache_key)
-        if stored_verification_code is not None:
+        if stored_verification_code:
             cache.delete(stored_verification_code)
 
         return send_code(email)
@@ -127,7 +173,23 @@ class ResendCode(APIView):
 # endregion
 
 class UserProfileView(APIView):
+    """
+    API view for user profile.
+    """
+
     def get(self, request, username, *args, **kwargs):
+        """
+        Handle GET request for user profile.
+
+        Parameters:
+        - request: Request object.
+        - username: Username of the requested user.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with user profile data.
+        """
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -135,10 +197,7 @@ class UserProfileView(APIView):
         user_serializer = UserSerializer(user, context={"request": request})
         user_post_serializer = PostSerializer(user.posts.all(), many=True, context={"request": request})
         user_story_serializer = StorySerializer(user.stories.all(), many=True, context={"request": request})
-        if user in request.user.following_users.all():
-            is_following = True
-        else:
-            is_following = False
+        is_following = user in request.user.following_users.all() if request.user.is_authenticated else False
         data = {
             'user_info': user_serializer.data,
             'posts': user_post_serializer.data,
@@ -149,7 +208,23 @@ class UserProfileView(APIView):
 
 
 class UserFollowApi(APIView):
+    """
+    API view for user follow/unfollow functionality.
+    """
+
     def post(self, request, username, *args, **kwargs):
+        """
+        Handle POST request for following/unfollowing a user.
+
+        Parameters:
+        - request: Request object.
+        - username: Username of the user to follow/unfollow.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with follow status.
+        """
         current_user = request.user
         try:
             user = User.objects.get(username=username)
@@ -164,7 +239,22 @@ class UserFollowApi(APIView):
 
 
 class ProfileApiView(APIView):
+    """
+    API view for user profile management.
+    """
+
     def get(self, request, *args, **kwargs):
+        """
+        Handle GET request for user profile data.
+
+        Parameters:
+        - request: Request object.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with user profile data.
+        """
         current_user = request.user
         user_serializer = UserSerializer(current_user, context={"request": request})
         user_post_serializer = PostSerializer(current_user.posts.all(), many=True, context={"request": request})
@@ -177,6 +267,17 @@ class ProfileApiView(APIView):
         return Response(data)
 
     def put(self, request, *args, **kwargs):
+        """
+        Handle PUT request for updating user profile.
+
+        Parameters:
+        - request: Request object.
+        - args: Additional arguments.
+        - kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response with updated user profile data.
+        """
         serializer = UpdateUserSerializer(instance=request.user, data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -184,7 +285,21 @@ class ProfileApiView(APIView):
 
 
 class LogoutView(APIView):
+    """
+    API view for user logout.
+    """
+
     def post(self, request, *args):
+        """
+        Handle POST request for user logout.
+
+        Parameters:
+        - request: Request object.
+        - args: Additional arguments.
+
+        Returns:
+        - Response with logout status.
+        """
         sz = RefreshTokenSerializer(data=request.data)
         sz.is_valid(raise_exception=True)
         sz.save()

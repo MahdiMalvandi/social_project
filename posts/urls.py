@@ -12,5 +12,6 @@ urlpatterns = [
     path('search/', SearchApiView.as_view(), name='search'),
     path('save/<int:post_id>/', SavedPostsApiView.as_view(), name='save post'),
     path('save/', SavedPostsListApiView.as_view(), name='saved post list'),
+    path('posts/get-by-tag/<tag_name>/', GetPostsByTagApiView.as_view())
 ]
 urlpatterns += router.urls

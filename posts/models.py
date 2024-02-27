@@ -8,11 +8,18 @@ from taggit.managers import TaggableManager
 
 
 class ActiveManager(models.Manager):
+    """
+    Manager to retrieve only active instances.
+    """
+
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True)
 
 
 class Post(models.Model):
+    """
+    Model representing a post.
+    """
     caption = models.TextField(max_length=10000)
     tags = TaggableManager(blank=True)
     author = models.ForeignKey(User, related_name='posts', on_delete=models.SET_NULL, null=True)
@@ -35,12 +42,24 @@ class Post(models.Model):
 
     @classmethod
     def search(cls, query):
+        """
+        Searches posts by caption similarity.
+
+        Parameters:
+            query (str): The search query.
+
+        Returns:
+            QuerySet: Filtered queryset of posts.
+        """
         return cls.objects.annotate(
             similarity=TrigramSimilarity('caption', query)
         ).filter(similarity__gt=0.1).order_by('-similarity')
 
 
 class Story(models.Model):
+    """
+    Model representing a story.
+    """
     content = models.TextField(max_length=10000)
     likes = GenericRelation("Like")
     author = models.ForeignKey(User, related_name='stories', on_delete=models.CASCADE)
@@ -48,7 +67,6 @@ class Story(models.Model):
     files = GenericRelation("FileMedia")
     is_active = models.BooleanField(default=True)
     objects = models.Manager()
-
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -58,11 +76,13 @@ class Story(models.Model):
 
 
 class Like(models.Model):
+    """
+    Model representing a like.
+    """
     user = models.ForeignKey(User, related_name='likes', on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -70,6 +90,9 @@ class Like(models.Model):
 
 
 class Comment(models.Model):
+    """
+    Model representing a comment.
+    """
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     body = models.TextField(max_length=1000)
     replies = models.ForeignKey('self', on_delete=models.CASCADE, related_name='comment_replies', null=True, blank=True)
@@ -82,6 +105,9 @@ class Comment(models.Model):
 
 
 class FileMedia(models.Model):
+    """
+    Model representing a file media.
+    """
     file = models.FileField(upload_to='files/')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -90,4 +116,3 @@ class FileMedia(models.Model):
 
     def __str__(self):
         return f"{self.file.name} - {self.content_object}"
-
