@@ -30,7 +30,7 @@ class PostsApiViewSet(ModelViewSet):
     pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'update':
             return PostCreateUpdateSerializer
         return PostSerializer
 
@@ -56,6 +56,19 @@ class PostsApiViewSet(ModelViewSet):
 
         return Response({'success': True, 'detail': "post created successfully"}, status=status.HTTP_201_CREATED)
 
+    def update(self, request, pk, *args, **kwargs):
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            return Response({'error': 'Not Found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(data=request.data, instance=post)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({'success': True, 'detail': "Post updated successfully"},
+                        status=status.HTTP_200_OK)
+
 
 class StoriesApiViewSet(ModelViewSet):
     """
@@ -73,12 +86,6 @@ class StoriesApiViewSet(ModelViewSet):
         if self.action == 'create':
             return StoryCreateUpdateSerializer
         return StorySerializer
-
-    def list(self, request, *args, **kwargs):
-        following_users = request.user.following.all()
-        following_stories = Story.actives.filter(author__in=following_users)
-        serializer = self.get_serializer(following_stories, many=True)
-        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         if request.data.get('content') is None:
@@ -140,7 +147,8 @@ class LikeApiView(PostStoryInteractionBaseView):
         content_type = self._get_content_type(object)
 
         like = Like.objects.filter(user=user, content_type=content_type, object_id=object.pk)
-
+        if not object.can_like:
+            return Response({'error': 'Like post is disabled'}, status=status.HTTP_400_BAD_REQUEST)
         if like.exists():
             like.delete()
             is_liked = False
@@ -200,6 +208,8 @@ class CommentsApiView(PostStoryInteractionBaseView):
 
         object = self._validate_post_or_story(post_or_story, pk)
 
+        if not object.can_add_comment:
+            return Response({'error': 'Adding comments for this post is disabled'}, status=status.HTTP_400_BAD_REQUEST)
         content_type = self._get_content_type(object)
 
         data = {

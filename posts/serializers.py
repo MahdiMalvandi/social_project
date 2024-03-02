@@ -127,10 +127,11 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField(read_only=True)
     is_liked = serializers.SerializerMethodField(read_only=True)
     tags = TagListSerializerField()
-
     class Meta:
         model = Post
-        fields = ('id', 'caption', 'files', 'is_liked', 'author', 'comments_count', 'likes_count', 'tags')
+        fields = ('id', 'caption', 'files', 'is_liked', 'author', 'comments_count', 'likes_count', 'tags', 'can_add_comment',
+                  'can_like'
+                                                                                                           )
 
     # Method Fields
     def get_is_liked(self, obj):
@@ -172,20 +173,52 @@ class PostCreateUpdateSerializer(serializers.Serializer):
     - `author`: Serialized user (read-only).
     - `files`: List of file attachments for the post.
     """
-    caption = serializers.CharField(max_length=1000)
+    caption = serializers.CharField(max_length=1000, required=False)
     author = UserSerializer(read_only=True)
-    files = serializers.ListField(child=serializers.FileField())
+    files = serializers.ListField(child=serializers.FileField(), required=False)
+    can_add_comment = serializers.BooleanField(required=False, default=True)
+    can_like = serializers.BooleanField(required=False, default=True)
 
     def create(self, validated_data):
         """
         Method to create a Post instance.
         """
         files_data = validated_data['files']
-        post = Post.actives.create(caption=validated_data['caption'], author=self.context['request'].user)
-
+        can_add_comment = validated_data['can_add_comment']
+        can_like = validated_data['can_like']
+        post = Post.actives.create(
+            caption=validated_data['caption'],
+            author=self.context['request'].user,
+            can_add_comment=can_add_comment,
+            can_like=can_like
+                                   )
+        for file in files_data:
+            file_obj = FileMedia.objects.create(
+                file=file,
+                content_type=ContentType.objects.get_for_model(Post),
+                object_id=post.id,
+            )
+            file_obj.save()
 
         post.save()
         return post
+
+    def update(self, instance, validated_data):
+        files = validated_data['files'] if 'files' in validated_data else None
+        if files:
+            for file in files:
+                file_obj = FileMedia.objects.create(
+                    file=file,
+                    content_type=ContentType.objects.get_for_model(Post),
+                    object_id=instance.id,
+                )
+                file_obj.save()
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+        return instance
 
 # endregion
 
@@ -207,7 +240,8 @@ class StorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Story
-        fields = ['content', 'author', 'is_liked', 'author', 'comments', 'files']
+        fields = ['id', 'content', 'author', 'is_liked', 'author', 'comments', 'files','can_add_comment',
+                  'can_like']
 
     def get_is_liked(self, obj):
         """
@@ -231,6 +265,7 @@ class StorySerializer(serializers.ModelSerializer):
         """
         return FileMediaSerializer(obj.files.all(), many=True, context={'request': self.context['request']}).data
 
+
 class StoryCreateUpdateSerializer(serializers.Serializer):
     """
     Serializer for creating and updating Story instances.
@@ -243,24 +278,46 @@ class StoryCreateUpdateSerializer(serializers.Serializer):
     content = serializers.CharField(max_length=1000)
     author = UserSerializer(read_only=True)
     files = serializers.ListField(child=serializers.FileField())
+    can_add_comment = serializers.BooleanField(required=False, default=True)
+    can_like = serializers.BooleanField(required=False, default=True)
 
     def create(self, validated_data):
         """
         Method to create a Story instance.
         """
         files_data = validated_data['files']
-        story = Story.actives.create(content=validated_data['content'], author=self.context['request'].user)
+        can_add_comment = validated_data['can_add_comment']
+        can_like = validated_data['can_like']
+        story = Story.actives.create(content=validated_data['content'], author=self.context['request'].user,can_add_comment=can_add_comment,
+            can_like=can_like)
 
         for file in files_data:
             file_obj = FileMedia.objects.create(
                 file=file,
                 content_type=ContentType.objects.get_for_model(Story),
-                object_id=story.id
+                object_id=story.id,
+
             )
             file_obj.save()
 
         story.save()
         return story
 
+    def update(self, instance, validated_data):
+        files = validated_data['files'] if 'files' in validated_data else None
+        if files:
+            for file in files:
+                file_obj = FileMedia.objects.create(
+                    file=file,
+                    content_type=ContentType.objects.get_for_model(Story),
+                    object_id=instance.id,
+                )
+                file_obj.save()
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+        return instance
 
 # endregion

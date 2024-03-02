@@ -45,8 +45,8 @@ def add_notification_for_followers_when_post_was_made(sender, instance, created,
 def add_notification_for_followers_when_story_was_made(sender, instance, created, **kwargs):
     if created:
         notif_message = f"User {instance.author.get_full_name()} posted a story with the username " \
-                        f"{instance.author.username}. Story content:{instance.caption[0:20]}" \
-                        f" {'...' if len(instance.caption) > 20 else ''}"
+                        f"{instance.author.username}. Story content:{instance.content[0:20]}" \
+                        f" {'...' if len(instance.content) > 20 else ''}"
 
         followers = instance.author.followers_relations.all()
         for follower in followers:

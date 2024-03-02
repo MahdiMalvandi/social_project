@@ -32,6 +32,8 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     saved = models.ManyToManyField(User, related_name='saved_posts')
+    can_add_comment = models.BooleanField(default=True)
+    can_like = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -70,6 +72,8 @@ class Story(models.Model):
     actives = ActiveManager()
     created = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    can_add_comment = models.BooleanField(default=True)
+    can_like = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Story by {self.author.username}"
