@@ -7,6 +7,8 @@ from .serializers import ConversationListSerializer, ConversationSerializer
 from django.db.models import Q
 from django.shortcuts import redirect, reverse
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 @api_view(['POST'])
 def start_conversation(request, username):

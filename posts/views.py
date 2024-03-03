@@ -16,6 +16,10 @@ from .serializers import (PostSerializer, StorySerializer, PostCreateUpdateSeria
 from users.models import User
 
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+
 class PostsApiViewSet(ModelViewSet):
     """
     This view set handles the retrieval and creation of posts.

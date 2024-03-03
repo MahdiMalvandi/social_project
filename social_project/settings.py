@@ -36,12 +36,12 @@ INSTALLED_APPS = [
     # Apps
     'users',
     'posts',
-    'admin_panel',
     'chat',
     'notification',
 
 ]
-APPEND_SLASH=False
+APPEND_SLASH = False
+
 MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
