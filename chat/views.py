@@ -1,3 +1,5 @@
+from rest_framework import status
+
 from users.serializers import UserSerializer
 from .models import Conversation, Message
 from rest_framework.decorators import api_view
@@ -10,6 +12,27 @@ from django.shortcuts import redirect, reverse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Start a conversation with the specified user.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'message': openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'text': openapi.Schema(type=openapi.TYPE_STRING)
+                },
+                required=[]
+            )
+        }
+    ),
+    responses={
+        200: openapi.Response(description="Conversation started successfully.", schema=ConversationSerializer),
+        400: "Invalid input or missing required field.",
+        302: "Redirects to the conversation page if a conversation with the user already exists."
+    }
+)
 @api_view(['POST'])
 def start_conversation(request, username):
     """
@@ -26,7 +49,7 @@ def start_conversation(request, username):
     try:
         participant = User.objects.get(username=username)
     except User.DoesNotExist:
-        return Response({'message': 'You cannot chat with a non-existent user'})
+        return Response({'message': 'You cannot chat with a non-existent user'}, status=status.HTTP_400_BAD_REQUEST)
 
     conversation = Conversation.objects.filter(Q(initiator=request.user, receiver=participant) |
                                                Q(initiator=participant, receiver=request.user))
@@ -35,14 +58,20 @@ def start_conversation(request, username):
     else:
         conversation = Conversation.objects.create(initiator=request.user, receiver=participant)
         if 'message' in data:
-            if 'text' not in data:
-                return Response({'error': "You have to provide a message text"}, status=400)
-            if 'receiver' not in data:
-                return Response({'error': "You have to provide receiver username"}, status=400)
-            Message.objects.create(sender=request.user, text=data['text'], conversation=conversation)
-        return Response(ConversationSerializer(instance=conversation).data)
+            message_data = data.get('message')
+            if 'text' in message_data:
+                Message.objects.create(sender=request.user, text=message_data['text'], conversation=conversation)
+        return Response(ConversationSerializer(instance=conversation).data, status=status.HTTP_200_OK)
 
-
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a conversation by its ID.",
+    manual_parameters=[
+        openapi.Parameter('convo_id', openapi.IN_PATH, description="The ID of the conversation to retrieve.", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: openapi.Response(description="Conversation data", schema=ConversationSerializer),
+               404: "Conversation id is wrong"},
+)
 @api_view(['GET'])
 def get_conversation(request, convo_id):
     """
@@ -63,6 +92,11 @@ def get_conversation(request, convo_id):
         return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a list of conversations involving the current user.",
+    responses={200: openapi.Response(description="List of conversations", schema=ConversationListSerializer)},
+)
 @api_view(['GET'])
 def conversations(request):
     """
@@ -74,7 +108,6 @@ def conversations(request):
     Returns:
         Response: HTTP response with the serialized list of conversations.
     """
-    conversation_list = Conversation.objects.filter(Q(initiator=request.user) |
-                                                    Q(receiver=request.user))
+    conversation_list = Conversation.objects.filter(Q(initiator=request.user) | Q(receiver=request.user))
     serializer = ConversationListSerializer(conversation_list, many=True, context={'request': request})
     return Response(serializer.data)
