@@ -12,4 +12,7 @@ urlpatterns = [
     path('follow/<username>/', UserFollowApi.as_view(), name='user follow'),
     path('profile/', ProfileApiView.as_view(), name='profile'),
     path('logout/', LogoutView.as_view(), name='auth_logout'),
+    path('change-password/', ChangePasswordApiView.as_view(), name='ChangePassword'),
+    path('reset-password/', ForgotPasswordSendEmailApiView.as_view(), name='reset_password'),
+    path('reset-password/confirm/', ForgotPasswordApiView.as_view(), name='reset_password_confirm'),
 ]

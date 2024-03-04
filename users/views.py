@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-from .functions import send_code
+from .functions import send_code, check_verification_code
 from users.models import User, Follow
 from .serializers import *
 from posts.serializers import PostSerializer, StorySerializer
@@ -46,8 +46,11 @@ class LoginView(APIView):
         data = request.data
         email = data.get('email')
         username = data.get('username')
+        password = data.get('password')
         if not email and not username:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Email or Username cannot be empty'})
+        if not password:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Password cannot be empty'})
         try:
             user = User.objects.get(email=email) if email else User.objects.get(username=username)
         except User.DoesNotExist:
@@ -55,7 +58,7 @@ class LoginView(APIView):
 
         if not user.is_auth:
             return Response(status=status.HTTP_403_FORBIDDEN, data={'error': 'User has to verify email'})
-        if user.check_password(data['password']):
+        if user.check_password(password):
             cache_key = f'email_verification:{user.email}'
             cached_code = cache.get(cache_key)
             if cached_code:
@@ -143,36 +146,22 @@ class GetUserToken(APIView):
         This endpoint is used to obtain user tokens after verification.
         If the verification code has expired, the user can send a request to the '/resend' endpoint to receive the code again.
         """
-
         user_email = request.data.get('email')
-        verification_code = request.data.get('code')
-
-        if not user_email:
-            return Response({'error': "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not verification_code:
-            return Response({'error': "Code cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
-
-        cache_key = f'email_verification:{user_email}'
-        stored_verification_code = cache.get(cache_key)
-
-        if stored_verification_code == verification_code:
+        check_code = check_verification_code(request)
+        if check_code['result']:
             user = User.objects.get(email=user_email)
 
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token_str = str(refresh)
-            cache.delete(cache_key)
             user.is_auth = True
             user.is_active = True
             user.save()
             response_data = {'access_token': access_token, 'refresh_token': refresh_token_str}
             return JsonResponse(response_data, status=status.HTTP_200_OK)
-        elif stored_verification_code is None:
-            return Response({"error": "The verification code either does not exist or has expired"},
-                            status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'detail': 'Invalid verification code'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": check_code['error']},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendCode(APIView):
@@ -180,7 +169,6 @@ class ResendCode(APIView):
     API view for resending verification code.
     """
     permission_classes = [AllowAny]
-
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -279,7 +267,8 @@ class UserFollowApi(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter('username', openapi.IN_PATH, description="Username of the user to follow/unfollow", type=openapi.TYPE_STRING),
+            openapi.Parameter('username', openapi.IN_PATH, description="Username of the user to follow/unfollow",
+                              type=openapi.TYPE_STRING),
         ],
         responses={
             200: "Following/unfollowing operation was successful. Returns follow status.",
@@ -346,11 +335,13 @@ class ProfileApiView(APIView):
                 'first_name': openapi.Schema(type=openapi.TYPE_STRING, description="First name of the user."),
                 'last_name': openapi.Schema(type=openapi.TYPE_STRING, description="Last name of the user."),
                 'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username of the user."),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description="Email address of the user."),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL,
+                                        description="Email address of the user."),
                 'phone_number': openapi.Schema(type=openapi.TYPE_STRING, description="Phone number of the user."),
                 'profile': openapi.Schema(type=openapi.TYPE_STRING, description="Profile information of the user."),
                 'gender': openapi.Schema(type=openapi.TYPE_STRING, description="Gender of the user."),
-                'date_of_birth': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE, description="Date of birth of the user."),
+                'date_of_birth': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE,
+                                                description="Date of birth of the user."),
             },
             description="Update user profile data."
         ),
@@ -414,3 +405,58 @@ class LogoutView(APIView):
         sz.save()
         request.user.is_active = False
         return Response(status=status.HTTP_200_OK)
+
+
+class ChangePasswordApiView(APIView):
+    def post(self, request, *args, **kwargs):
+
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+
+        if not old_password or not new_password:
+            return Response({'error': "old password or new password cannot be empty"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(old_password):
+            return Response({'error': "Old password is wrong"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            user.set_password(new_password)
+            user.save()
+            return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordSendEmailApiView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({'error': "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return send_code(email, key ='forgot_password')
+
+
+class ForgotPasswordApiView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, *args, **kwargs):
+        new_password = request.data.get('new_password')
+        email = request.data.get('email')
+        if not new_password:
+            return Response({'error': "New password is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({'error': "Email address is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        check_code = check_verification_code(request, key='forgot_password')
+        if check_code:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response({'error': "User Not Found"}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+            user.save()
+            return Response({'success': True, 'message': "Password was Changed"}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': "Invalid Code"}, status=status.HTTP_400_BAD_REQUEST)
+
