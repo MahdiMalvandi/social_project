@@ -30,9 +30,9 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('posts.urls')),
     path('chat/', include('chat.urls')),
+    path('notification/', include('notification.urls')),
 
-
-   # Swagger
+    # Swagger
     path('docs/', schema_view.with_ui(), name='schema-swagger-ui'),
 ]
 
