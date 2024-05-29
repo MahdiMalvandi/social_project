@@ -11,7 +11,7 @@ from taggit.managers import TaggableManager
 
 class ActiveStoryManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(created__gte=timezone.now() - timezone.timedelta(seconds=10))
+        return super().get_queryset().filter(created__gte=timezone.now() - timezone.timedelta(days=1))
 
 
 class ActiveManager(models.Manager):
