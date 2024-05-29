@@ -1,7 +1,7 @@
-from django.contrib.postgres.search import TrigramSimilarity
 from django.db import models
 from django.core import validators
 from django.contrib.auth.models import AbstractBaseUser, UserManager, PermissionsMixin
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -18,16 +18,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
 
     GENDER_CHOICES = (
-        ('m', 'Male'),
-        ('f', 'Female')
+        ('M', 'Male'),
+        ('F', 'Female')
     )
 
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=32)
+    last_name = models.CharField(max_length=32)
     username = models.CharField(max_length=32, unique=True)
     is_auth = models.BooleanField(default=False)
     email = models.EmailField(max_length=50, unique=True)
-    phone_number = models.CharField(unique=True, validators=[
+    phone_number = models.CharField(unique=True, max_length=20, validators=[
         validators.RegexValidator(r'^989[0-3,9]\d{8}$', 'Enter a valid mobile number')
     ])
     profile = models.ImageField(upload_to=user_profile_upload_path, blank=True, null=True)
@@ -47,9 +47,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email', 'phone_number']
 
     objects = UserManager()
-
-    class Meta:
-        db_table = 'users'
 
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'
@@ -88,11 +85,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @classmethod
     def search(cls, query):
-        return cls.objects.annotate(
-            similarity=TrigramSimilarity('username', query) +
-                       TrigramSimilarity('first_name', query) +
-                       TrigramSimilarity('last_name', query)
-        ).filter(similarity__gt=0.1).order_by('-similarity')
+        return cls.objects.filter(
+            Q(username__iregex=query) |
+            Q(first_name__iregex=query) |
+            Q(last_name__iregex=query)
+        ).order_by('username')
 
 
 class Follow(models.Model):

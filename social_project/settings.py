@@ -27,8 +27,6 @@ INSTALLED_APPS = [
     'taggit',
     'rest_framework_simplejwt',
     'corsheaders',
-    'celery',
-    'django_celery_beat',
     'rest_framework_simplejwt.token_blacklist',
     'django_rest_passwordreset',
     'channels',
@@ -81,14 +79,20 @@ ASGI_APPLICATION = 'social_project.asgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "social_project",
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'PORT': DB_PORT
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'social',
+#         'USER': 'mahdi',
+#         'PASSWORD': 'mahdiml6',
+#         'HOST': 'db',
+#         'PORT': '5432',
+#     }
+# }
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -113,7 +117,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # Media Files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -130,12 +134,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_PASSWORD = 'ymwnxfcequxzltzm'
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": "c:/django_app/cache",
     }
 }
 
@@ -145,11 +146,10 @@ SESSION_CACHE_ALIAS = "default"
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",  # یا هر مبدأ دیگر که نیاز دارید
+    'http://127.0.0.1',
+    'http://localhost',
 ]
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    'http://127.0.0.1:5500',
-]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -169,26 +169,17 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True
 }
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-
-CELERY_BEAT_SCHEDULE = {
-    'deactivate-stories': {
-        'task': 'posts.tasks.deactivate_stories',
-        'schedule': 10,
-    },
-}
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
 }

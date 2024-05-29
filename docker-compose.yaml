@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+
+
+  app:
+    build:
+      context: .
+    container_name: social_project
+
+    volumes:
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
+    ports:
+      - 8000:8000
+    restart: always
+
+
+volumes:
+  postgres:
+  static:
+  media:

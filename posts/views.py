@@ -180,6 +180,12 @@ class StoriesApiViewSet(ModelViewSet):
             return StoryCreateUpdateSerializer
         return StorySerializer
 
+    def get_queryset(self):
+        """
+        This method returns the queryset of posts.
+        """
+        queryset = Story.public.filter(author__in=self.request.user.following_users.all())
+        return queryset
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,

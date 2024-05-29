@@ -6,6 +6,7 @@ from celery import shared_task
 @shared_task
 def deactivate_stories():
     active_stories = Story.actives.filter(created__lt=timezone.now() - timezone.timedelta(hours=1))
+    print(active_stories)
     for story in active_stories:
         story.is_active = False
         story.save()

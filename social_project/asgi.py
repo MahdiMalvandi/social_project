@@ -13,6 +13,6 @@ all_routings = routing.websocket_urlpatterns + notification_routing.websocket_ur
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket":   # new
+    "websocket":  # new
         JWTWebsocketMiddleware(URLRouter(all_routings)),
 })

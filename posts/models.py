@@ -3,8 +3,15 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db import models
+from django.utils import timezone
+
 from users.models import User
 from taggit.managers import TaggableManager
+
+
+class ActiveStoryManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(created__gte=timezone.now() - timezone.timedelta(seconds=10))
 
 
 class ActiveManager(models.Manager):
@@ -74,6 +81,7 @@ class Story(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     can_add_comment = models.BooleanField(default=True)
     can_like = models.BooleanField(default=True)
+    public = ActiveStoryManager()
 
     def __str__(self):
         return f"Story by {self.author.username}"
