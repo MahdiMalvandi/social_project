@@ -1,5 +1,5 @@
 <h1 style="background: rgb(246,4,213);
-background: linear-gradient(90deg, rgba(246,4,213,1) 0%, rgba(4,223,69,1) 0%, rgba(9,9,121,1) 51%, rgba(255,0,11,1) 100%);padding:1.5rem;text-align:center;">پروژه سوشال مدیا با جنگو</h1>
+background: linear-gradient(90deg, rgba(246,4,213,1) 0%, rgba(4,223,69,1) 0%, rgba(9,9,121,1) 51%, rgba(255,0,11,1) 100%);padding:1.5rem;text-align:center;" align=center>پروژه سوشال مدیا با جنگو</h1>
 
 <p style="font-size:1.1rem">این سایت مقاله ای با جنگو نسخه۵ نوشته شده. پروژه api-base هست و با Django Rest Framework نوشته شده است و برای قسمت چت و نوتیفیکیشن از channel استفاده شده .</p>
 
@@ -75,5 +75,5 @@ background: linear-gradient(90deg, rgba(246,4,213,1) 0%, rgba(4,223,69,1) 0%, rg
 <ul>
 <li><span style="color:green;font-weight:bold;font-size:1.2rem">داکرایزر کردن و بالا اوردن پروژه بر روی nginx:</span>فایل هاشو ایجاد کردم و در اولین فرصتی که بتونم این کارارو انجام میدم</li>
 
-<h4 style="text-align:center;background-color:white; padding:1rem;background: rgb(246,4,213);
+<h4 align=center style="text-align:center;background-color:white; padding:1rem;background: rgb(246,4,213);
 background: linear-gradient(90deg, rgba(246,4,213,1) 0%, rgba(9,9,121,1) 51%, rgba(0,212,255,1) 100%);">لطفا اگر باگ یا مشکلی در پروژه پیدا کردید ممنون میشم در قسمت issues به من اطلاع بدید</h4>
