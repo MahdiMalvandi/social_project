@@ -34,7 +34,7 @@ from drf_yasg.utils import swagger_auto_schema
     }
 )
 @api_view(['POST'])
-def start_conversation(request, username):
+def add_message(request, username):
     """
     Start a conversation with the specified user.
 
@@ -51,17 +51,16 @@ def start_conversation(request, username):
     except User.DoesNotExist:
         return Response({'message': 'You cannot chat with a non-existent user'}, status=status.HTTP_400_BAD_REQUEST)
 
-    conversation = Conversation.objects.filter(Q(initiator=request.user, receiver=participant) |
+    conversations = Conversation.objects.filter(Q(initiator=request.user, receiver=participant) |
                                                Q(initiator=participant, receiver=request.user))
-    if conversation.exists():
-        return redirect(reverse('get_conversation', args=(conversation[0].id,)))
-    else:
+    if not conversations.exists():
         conversation = Conversation.objects.create(initiator=request.user, receiver=participant)
-        if 'message' in data:
-            message_data = data.get('message')
-            if 'text' in message_data:
-                Message.objects.create(sender=request.user, text=message_data['text'], conversation=conversation)
-        return Response(ConversationSerializer(instance=conversation).data, status=status.HTTP_200_OK)
+    else:
+        conversation = conversations.first()
+    if 'message' in data:
+        message_data = data.get('message')
+        Message.objects.create(sender=request.user, text=message_data, conversation=conversation)
+    return Response(ConversationSerializer(instance=conversation, context={'request':request}).data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='get',
@@ -73,7 +72,7 @@ def start_conversation(request, username):
                404: "Conversation id is wrong"},
 )
 @api_view(['GET'])
-def get_conversation(request, convo_id):
+def get_conversation(request, username):
     """
     Retrieve a conversation by its ID.
 
@@ -84,11 +83,19 @@ def get_conversation(request, convo_id):
     Returns:
         Response: HTTP response with the serialized conversation data.
     """
-    conversation = Conversation.objects.filter(id=convo_id)
-    if not conversation.exists():
+    data = request.data
+    try:
+        participant = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({'message': 'You cannot chat with a non-existent user'}, status=status.HTTP_400_BAD_REQUEST)
+
+    conversations = Conversation.objects.filter(Q(initiator=request.user, receiver=participant) |
+                                               Q(initiator=participant, receiver=request.user))
+    conversation = conversations.first()
+    if not conversations.exists():
         return Response({'message': 'Conversation does not exist'})
     else:
-        serializer = ConversationSerializer(instance=conversation[0], context={'request': request})
+        serializer = ConversationSerializer(instance=conversation, context={'request': request})
         return Response(serializer.data)
 
 
@@ -111,3 +118,15 @@ def conversations(request):
     conversation_list = Conversation.objects.filter(Q(initiator=request.user) | Q(receiver=request.user))
     serializer = ConversationListSerializer(conversation_list, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+def delete_message(request, id):
+    messages = Message.objects.filter(id=id)
+    if not messages.exists():
+        return Response({'error': "A message with this id does not exists"}, status=status.HTTP_404_NOT_FOUND)
+    message = messages.first()
+    message.delete()
+    return Response({'success': True}, status.HTTP_200_OK)
+
+

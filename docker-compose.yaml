@@ -12,7 +12,7 @@ services:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
     ports:
-      - 8000:8000
+      - "8001:8001"
     restart: always
 
 

@@ -19,7 +19,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ('timestamp', 'text', 'sender', 'sent')
+        fields = ("id", 'timestamp', 'text', 'sender', 'sent')
 
     def get_sent(self, instance):
         """
@@ -31,10 +31,16 @@ class MessageSerializer(serializers.ModelSerializer):
         Returns:
             bool: True if the message was sent by the requesting user, False otherwise.
         """
-        if instance.sender == self.context['user']:
-            return True
+        if self.context.get('user', None) is None:
+            if instance.sender == self.context['request'].user:
+                return True
+            else:
+                return False
         else:
-            return False
+            if instance.sender == self.context.get('user'):
+                return True
+            else:
+                return False
 
 
 class ConversationListSerializer(serializers.ModelSerializer):
@@ -52,10 +58,11 @@ class ConversationListSerializer(serializers.ModelSerializer):
     initiator = UserSerializer()
     receiver = UserSerializer()
     last_message = serializers.SerializerMethodField()
+    get_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
-        fields = ['initiator', 'receiver', 'last_message', 'id']
+        fields = ['initiator', 'receiver', 'last_message', 'id', 'get_data']
         extra_kwargs = {'id': {'read_only': True}}
 
     def get_last_message(self, instance):
@@ -69,7 +76,15 @@ class ConversationListSerializer(serializers.ModelSerializer):
             dict: Serialized representation of the last message.
         """
         message = instance.messages.first()
-        return MessageSerializer(message, context={'user': self.context['request'].user}).data
+        return MessageSerializer(message, context={'request': self.context['request']}).data
+
+    def get_get_data(self, instance):
+        url = '/chat/'
+        current_user = self.context['request'].user
+        if current_user == instance.receiver:
+            return f'{url}{instance.initiator.username}/'
+        else:
+            return f'{url}{instance.receiver.username}/'
 
 
 class ConversationSerializer(serializers.ModelSerializer):
