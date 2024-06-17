@@ -43,7 +43,12 @@ background: linear-gradient(90deg, rgba(246,4,213,1) 0%, rgba(4,223,69,1) 0%, rg
 
 ‍```python manage.py migrate```
 
-### گام سوم: اجرا کردن پروژه
+### گام سوم: دستور collectstatic
+<p>دستور زیر را اجرا کنید</p>
+
+```python manage.py collectstatic```
+
+### گام چهارم: اجرا کردن پروژه
 
 <p>با دستور زیر پروژه رو ران کنید</p>
 
